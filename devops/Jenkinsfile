@@ -54,16 +54,16 @@ pipeline {
 				script{
 				    def paths = [["path":"${gitclientdir}"],["path": "/common"],["path": "/devops"]]
 					dir(builddir) {
-					//	checkout([$class: 'GitSCM', 
-					//	   branches: [[name: '*/master']], 
-					//	   doGenerateSubmoduleConfigurations: false, 
-					//	   extensions: [
-					//			[$class: 'SparseCheckoutPaths',
-					//			 sparseCheckoutPaths: paths
-					//			]
-					//		], 
-					//	   submoduleCfg: [], 
-					//	   userRemoteConfigs: [[  credentialsId: credentialkey, url: gitrepourl]]])
+						checkout([$class: 'GitSCM', 
+						   branches: [[name: '*/master']], 
+						   doGenerateSubmoduleConfigurations: false, 
+						   extensions: [
+								[$class: 'SparseCheckoutPaths',
+								 sparseCheckoutPaths: paths
+								]
+							], 
+						   submoduleCfg: [], 
+						   userRemoteConfigs: [[  credentialsId: credentialkey, url: gitrepourl]]])
 					}
 				}
 		    }			  
