@@ -34,9 +34,6 @@ pipeline {
 		credentialkey = "${params.credentialkey}"
 		gitrepourl =  "${params.gitrepourl}"
 		
-		 //below is just to push the images 
-		reportZipFile = "package.zip"
-		
 		
 		source_dir = "${gitclientdir}/src"
 		dependents = "/common/eCollection_MISIntimation_API,/common/eCollection_MessageHolding_CustomerInstance"
@@ -79,7 +76,7 @@ pipeline {
                 stage("build the code") {
                     steps {
                         echo "In build"
-                        copySource("")
+                        copySource("target")
                     }
                 }
                 stage("Perform SAST") {
@@ -91,12 +88,18 @@ pipeline {
 				   }
                 }				
                 stage("package the bars and others") {
+				    // this stage will perform packaging the bar - 
+					// mqsipackagebar client to be used.
+					// the bar file name: product_name + client_name.bar
+					// It would be created in target folder from workspace directory. 
                     steps {
                         echo "In package the bars and others"
                         buildPackage()
                     }
                 }
 				stage("Push bars to SCM") {
+   				    // this stage will perform packaging the bar - 
+					// mqsipackagebar client to be used
                     steps {
                         echo "Push bars to SCM"
                         uploadPackage()
@@ -214,38 +217,37 @@ pipeline {
     }		
 }
 
-def copySource(basedFolder){
-    sh 'mkdir -pv target'
+def copySource(target){
+    sh 'mkdir -pv '+target
     
     //def sourceDir = "${source_dir}"
-    def workspace = pwd()
-    echo "current directory is $workspace"
+    //def workspace = pwd()
+    //echo "current directory is $workspace"
     
-    sh 'cp -rv ./${builddir}${source_dir}/. target'
-    sh 'cp -rv ./${builddir}/common/eCollection_MISIntimation_API/. target'
-    sh 'cp -rv ./${builddir}/common/eCollection_MessageHolding_CustomerInstance/. target'
+    sh 'cp -rv ./${builddir}${source_dir}/. '+target
+    //sh 'cp -rv ./${builddir}/common/eCollection_MISIntimation_API/. target'
+    // sh 'cp -rv ./${builddir}/common/eCollection_MessageHolding_CustomerInstance/. target'
 
     def arr = "${dependents}".split(",")
     for (dir in arr) {
-       println "now got ./${builddir}${dir}/."
-
-       //sh 'cp -rv ./${builddir}${dir}/. target'
+       sh 'cp -rv '+"./${builddir}${dir}/. "+target
     }
 
 }
 
 def buildPackage(){
-
-		//sh 'echo "Hey I am at build no.  $BUILD_NUMBER">>currentBuildfile' 
-		sh 'tar -cvf ./${builddir}/devops/packages/package-${builddir}.tar target'
-			
-		dir("target@tmp") {
-		   deleteDir()
-		}
+	//This is to be modified as per mqsipackagebar tool 
+	sh '''
+	cd target
+	tar -cvf ../${builddir}/devops/packages/package-${builddir}.tar .
+	cd ..
+	'''	
+	dir("target@tmp") {
+	   deleteDir()
+	}
 }
 
 def uploadPackage(){
-
            dir("${builddir}") {
 				sh '''
 				git init
@@ -257,7 +259,6 @@ def uploadPackage(){
 				fi
 				'''
 			}
-	
 }
 
 // get change log to be send over the mail
