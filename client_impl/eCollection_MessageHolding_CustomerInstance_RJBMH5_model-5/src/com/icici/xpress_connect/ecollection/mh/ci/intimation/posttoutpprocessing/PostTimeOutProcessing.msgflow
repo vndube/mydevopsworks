@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ComIbmCollector.msgnode="ComIbmCollector.msgnode" xmlns:ComIbmCompute.msgnode="ComIbmCompute.msgnode" xmlns:ComIbmMQInput.msgnode="ComIbmMQInput.msgnode" xmlns:ComIbmMQOutput.msgnode="ComIbmMQOutput.msgnode" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:eflow="http://www.ibm.com/wbi/2005/eflow" xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility" nsURI="com/icici/xpress_connect/ecollection/mh/ci/intimation/posttoutpprocessing/PostTimeOutProcessing.msgflow" nsPrefix="com_icici_xpress_connect_ecollection_mh_ci_intimation_posttoutpprocessing_PostTimeOutProcessing.msgflow">
+  <eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1">
+    <eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+    <translation xmi:type="utility:TranslatableString" key="PostTimeOutProcessing" bundleName="com/icici/xpress_connect/ecollection/mh/ci/intimation/posttoutpprocessing/PostTimeOutProcessing" pluginId="eCollection_MessageHolding_CustomerInstance"/>
+    <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/eCollection_MessageHolding_CustomerInstance/icons/full/obj16/PostTimeOutProcessing.gif"/>
+    <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/eCollection_MessageHolding_CustomerInstance/icons/full/obj30/PostTimeOutProcessing.gif"/>
+    <composition>
+      <nodes xmi:type="ComIbmCollector.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_1" location="275,225" collectionName="TIMEOUT-REPLY" collectionExpiry="4800">
+        <inTerminals terminalNodeID="Response" dynamic="true" label="Response"/>
+        <inTerminals terminalNodeID="Request" dynamic="true" label="Request"/>
+        <translation xmi:type="utility:ConstantString" string="Collector"/>
+        <eventHandlerPropertyTable terminal="Response" quantity="1" correlationPath="$Root/JSON/Data/transaction_id" correlationPattern=""/>
+        <eventHandlerPropertyTable terminal="Request" quantity="1" correlationPath="$Root/JSON/Data/transaction_id" correlationPattern=""/>
+      </nodes>
+      <nodes xmi:type="ComIbmMQInput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_2" location="96,112" queueName="IXC.ECOLL.MH.PARK.TOUT.RES.IN">
+        <translation xmi:type="utility:ConstantString" string="ResponseIn"/>
+      </nodes>
+      <nodes xmi:type="ComIbmMQInput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_3" location="97,232" queueName="IXC.ECOLL.MH.PARK.TOUT.REQ.IN">
+        <translation xmi:type="utility:ConstantString" string="RequestIn"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_4" location="463,221" computeExpression="esql://routine/com.icici.xpress_connect.ecollection.mh.ci.intimation.posttoutpprocessing#PostTimeOutProcessing_HandleTimedoutResponse.Main">
+        <translation xmi:type="utility:ConstantString" string="HandleTimedOutResponse"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_5" location="498,86" computeExpression="esql://routine/com.icici.xpress_connect.ecollection.mh.ci.intimation.posttoutpprocessing#PostTimeOutProcessing_TimedOutfailure.Main">
+        <translation xmi:type="utility:ConstantString" string="TimedOutfailure"/>
+      </nodes>
+      <nodes xmi:type="ComIbmMQOutput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_7" location="743,225" queueName="IXC.ECOLLECTION.MH.VALIDATOR.IN">
+        <translation xmi:type="utility:ConstantString" string="ValidateionHandlerOut"/>
+      </nodes>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_1" targetNode="FCMComposite_1_1" sourceNode="FCMComposite_1_3" sourceTerminalName="OutTerminal.out" targetTerminalName="Request"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_2" targetNode="FCMComposite_1_1" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.out" targetTerminalName="Response"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_5" targetNode="FCMComposite_1_7" sourceNode="FCMComposite_1_4" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_6" targetNode="FCMComposite_1_5" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.failure" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_7" targetNode="FCMComposite_1_5" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.catch" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_8" targetNode="FCMComposite_1_5" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.expire" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_9" targetNode="FCMComposite_1_4" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+    </composition>
+    <propertyOrganizer/>
+    <stickyBoard/>
+  </eClassifiers>
+</ecore:EPackage>

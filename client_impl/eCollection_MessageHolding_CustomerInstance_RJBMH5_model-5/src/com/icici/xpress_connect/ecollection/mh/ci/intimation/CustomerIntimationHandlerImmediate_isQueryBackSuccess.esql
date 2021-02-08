@@ -1,0 +1,15 @@
+BROKER SCHEMA com.icici.xpress_connect.ecollection.mh.ci.intimation
+
+
+CREATE FILTER MODULE CustomerIntimationHandlerImmediate_isQueryBackSuccess
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		 
+		IF Environment.Variables.queryBack.resultObtained THEN
+			RETURN TRUE;
+		ELSE 
+			RETURN FALSE;
+		END IF;
+	END;
+
+END MODULE;

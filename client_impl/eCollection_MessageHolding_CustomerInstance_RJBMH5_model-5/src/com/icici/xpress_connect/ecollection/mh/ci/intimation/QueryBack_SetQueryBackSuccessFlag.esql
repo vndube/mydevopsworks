@@ -1,0 +1,36 @@
+BROKER SCHEMA com.icici.xpress_connect.ecollection.mh.ci.intimation
+
+
+CREATE COMPUTE MODULE QueryBack_SetQueryBackSuccessFlag
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		-- CALL CopyMessageHeaders();
+		 CALL CopyEntireMessage();
+
+			IF OutputRoot.JSON.Data.reason_code IN (API_REASON_CODE_TRANSACTION_REJECTED, API_REASON_CODE_TRANSACTION_ACCEPTED) THEN
+				SET Environment.Variables.queryBack.pathExecuted = TRUE;
+				SET Environment.Variables.queryBack.resultObtained = TRUE;		
+
+			ELSE
+				SET Environment.Variables.queryBack.pathExecuted = TRUE;
+				SET Environment.Variables.queryBack.resultObtained = FALSE;		
+			END IF;
+
+
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+END MODULE;
