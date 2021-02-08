@@ -1,0 +1,1141 @@
+BROKER SCHEMA com.icici.xpress_connect.common.api
+
+-- [03-Jul-2020]: Message security (Checksum / Hashing & Encryption)
+DECLARE soapEnv11 			NAMESPACE 'http://schemas.xmlsoap.org/soap/envelope/';
+DECLARE soapEnv12 			NAMESPACE 'http://www.w3.org/2003/05/soap-envelope';
+
+-- ********** ********** ********** ********** ********** ********** ********** ********** ********** ********** ********** ********** ********** ********** 
+-- XML Signature Declarations  
+-- ********** ********** ********** ********** ********** ********** ********** ********** ********** ********** ********** ********** ********** ********** 
+
+DECLARE soapWSSE10 			NAMESPACE 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd';
+DECLARE soapWSSE11 			NAMESPACE 'http://docs.oasis-open.org/wss/2005/xx/oasis-2005xx-wss-wssecurity-secext-1.1.xsd';
+DECLARE soapWSSEU 			NAMESPACE 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd';
+
+-- Digest:
+--    SHA1 (Use is DISCOURAGED; see SHA-1 Warning) 		http://www.w3.org/2000/09/xmldsig#sha1
+--    SHA256 																						http://www.w3.org/2001/04/xmlenc#sha256
+--    SHA512 																						http://www.w3.org/2001/04/xmlenc#sha512
+
+DECLARE XML_DSIG_DIGEST_SHA1 						NAMESPACE	'http://www.w3.org/2000/09/xmldsig#sha1';
+DECLARE XML_DSIG_DIGEST_SHA224 					NAMESPACE	'http://www.w3.org/2001/04/xmlenc#sha224';
+DECLARE XML_DSIG_DIGEST_SHA256 					NAMESPACE	'http://www.w3.org/2001/04/xmlenc#sha256';
+DECLARE XML_DSIG_DIGEST_SHA384 					NAMESPACE	'http://www.w3.org/2001/04/xmlenc#sha384';
+DECLARE XML_DSIG_DIGEST_SHA512 					NAMESPACE	'http://www.w3.org/2001/04/xmlenc#sha512';
+
+--	Encoding
+--	        base64  																					http://www.w3.org/2000/09/xmldsig#base64
+DECLARE XML_DSIG_ENCODING_X509_TOKEN_BASE64 	CONSTANT CHARACTER 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-x509-token-profile-1.0#Base64Binary';
+
+--	Transform
+-- 		 		XML Signature	2.0															http://www.w3.org/2010/xmldsig2#transform
+--				base64 																				http://www.w3.org/2000/09/xmldsig#base64
+-- 				Enveloped Signature														http://www.w3.org/2000/09/xmldsig#enveloped-signature
+-- 				XPath																					http://www.w3.org/TR/1999/REC-xpath-19991116
+-- 				XSLT																					http://www.w3.org/TR/1999/REC-xslt-19991116
+
+DECLARE XML_DSIG_TRANSFORM_XMLSIGN20 								CONSTANT CHARACTER 	'http://www.w3.org/2010/xmldsig2#transform';
+DECLARE XML_DSIG_TRANSFORM_BASE64 										CONSTANT CHARACTER 	'http://www.w3.org/2000/09/xmldsig#base64';
+DECLARE XML_DSIG_TRANSFORM_ENVELOPED_SIGNATURE 	CONSTANT CHARACTER 	'http://www.w3.org/2000/09/xmldsig#enveloped-signature';
+DECLARE XML_DSIG_TRANSFORM_XPATH											CONSTANT CHARACTER 	'http://www.w3.org/TR/1999/REC-xpath-19991116';
+DECLARE XML_DSIG_TRANSFORM_XSLT 											CONSTANT CHARACTER 	'http://www.w3.org/TR/1999/REC-xslt-19991116';
+
+--	MAC
+--	        HMAC-SHA1 (Use is DISCOURAGED; see SHA-1 Warning) 		http://www.w3.org/2000/09/xmldsig#hmac-sha1
+--	        HMAC-SHA256  																						http://www.w3.org/2001/04/xmldsig-more#hmac-sha256
+--	        HMAC-SHA512  																						http://www.w3.org/2001/04/xmldsig-more#hmac-sha512
+
+DECLARE XML_DSIG_HMAC_SHA1															NAMESPACE	'http://www.w3.org/2000/09/xmldsig#hmac-sha1';
+DECLARE XML_DSIG_HMAC_SHA256														NAMESPACE	'http://www.w3.org/2001/04/xmldsig-more#hmac-sha256';
+DECLARE XML_DSIG_HMAC_SHA512														NAMESPACE	'http://www.w3.org/2001/04/xmldsig-more#hmac-sha512';
+
+--	Signature
+--	        RSAwithSHA256 																					http://www.w3.org/2001/04/xmldsig-more#rsa-sha256 [RFC6931]
+--	        DSAwithSHA1 (signature verification) 												http://www.w3.org/2000/09/xmldsig#dsa-sha1 [RFC6931]
+--	        RSAwithSHA1 (signature verification; use for signature 
+--				generation is DISCOURAGED; see SHA-1 Warning) 					http://www.w3.org/2000/09/xmldsig#rsa-sha1
+--	        RSAwithSHA512 																					http://www.w3.org/2001/04/xmldsig-more#rsa-sha512
+--	        DSAwithSHA1 (signature generation) 												http://www.w3.org/2000/09/xmldsig#dsa-sha1
+--	        DSAwithSHA256 																					http://www.w3.org/2009/xmldsig11#dsa-sha256
+
+DECLARE XML_DSIG_SIGN_RSAwithSHA256		CONSTANT CHARACTER	'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256';
+DECLARE XML_DSIG_SIGN_DSAwithSHA1			CONSTANT CHARACTER	'http://www.w3.org/2000/09/xmldsig#dsa-sha1';
+DECLARE XML_DSIG_SIGN_RSAwithSHA1			CONSTANT CHARACTER	'http://www.w3.org/2000/09/xmldsig#rsa-sha1';
+DECLARE XML_DSIG_SIGN_RSAwithSHA512		CONSTANT CHARACTER	'http://www.w3.org/2001/04/xmldsig-more#rsa-sha512';
+DECLARE XML_DSIG_SIGN_DSAwithSHA256		CONSTANT CHARACTER	'http://www.w3.org/2009/xmldsig11#dsa-sha256';
+DECLARE XML_DSIG_SIGN_RSAwithSHA224		CONSTANT CHARACTER	'http://www.w3.org/2001/04/xmldsig-more#rsa-sha224';
+DECLARE XML_DSIG_SIGN_RSAwithSHA384		CONSTANT CHARACTER	'http://www.w3.org/2001/04/xmldsig-more#rsa-sha384';
+
+-- ECDSA signature algo: 
+DECLARE XML_DSIG_SIGN_ECDSAwithSHA1								CONSTANT CHARACTER	'http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha1';
+DECLARE XML_DSIG_SIGN_ECDSAwithSHA224							CONSTANT CHARACTER	'http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha224';
+DECLARE XML_DSIG_SIGN_ECDSAwithSHA256							CONSTANT CHARACTER	'http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha256';
+DECLARE XML_DSIG_SIGN_ECDSAwithSHA384							CONSTANT CHARACTER	'http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha384';
+DECLARE XML_DSIG_SIGN_ECDSAwithSHA512							CONSTANT CHARACTER	'http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha512';
+
+DECLARE XML_DSIG_TOKEN_TYPE_X503 				CONSTANT CHARACTER 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-x509-token-profile-1.0#X509v3';
+
+DECLARE XML_DSIG 														NAMESPACE	'http://www.w3.org/2000/09/xmldsig#';
+DECLARE XML_DSIG20													NAMESPACE 'http://www.w3.org/2010/xmldsig2#';
+
+--	Canonicalization
+--	        Canonical XML 2.0
+DECLARE XML_DSIG_CANONICAL_METHOD_C14N2 			CONSTANT CHARACTER 'http://www.w3.org/2010/xml-c14n2';
+--         Canonical XML 1.0 (omits comments) 								http://www.w3.org/TR/2001/REC-xml-c14n-20010315
+DECLARE XML_DSIG_CANONICAL_METHOD_C14N1 			CONSTANT CHARACTER 'http://www.w3.org/TR/2001/REC-xml-c14n-20010315';
+--        Canonical XML 1.1 (omits comments)	 								http://www.w3.org/2006/12/xml-c14n11
+DECLARE XML_DSIG_CANONICAL_METHOD_C14N11		CONSTANT CHARACTER 'http://www.w3.org/2006/12/xml-c14n11';
+--        Exclusive XML Canonicalization 1.0 (omits comments) 	http://www.w3.org/2001/10/xml-exc-c14n#
+DECLARE XML_DSIG_CANONICAL_METHOD_C14N1_EXCLUSIVE			
+																												CONSTANT CHARACTER 'http://www.w3.org/2001/10/xml-exc-c14n#';
+--        Canonical XML 1.0 with Comments 										http://www.w3.org/TR/2001/REC-xml-c14n-20010315#WithComments
+DECLARE XML_DSIG_CANONICAL_METHOD_C14N1_WITH_COMMENTS 			
+																												CONSTANT CHARACTER 'http://www.w3.org/TR/2001/REC-xml-c14n-20010315#WithComments';
+--        Canonical XML 1.1 with Comments 										http://www.w3.org/2006/12/xml-c14n11#WithComments
+DECLARE XML_DSIG_CANONICAL_METHOD_C14N11_WITH_COMMENTS 			
+																												CONSTANT CHARACTER 'http://www.w3.org/2006/12/xml-c14n11#WithComments';
+--        Exclusive XML Canonicalization 1.0 with Comments 		http://www.w3.org/2001/10/xml-exc-c14n#WithComments
+DECLARE XML_DSIG_CANONICAL_METHOD_C14N1_WITH_COMMENTS_EXCLUSIVE 			
+																												CONSTANT CHARACTER 'http://www.w3.org/2001/10/xml-exc-c14n#WithComments';
+
+--	  Canonical XML 2.0
+DECLARE XML_DSIG_CANONICAL_METHOD_ID_C14N2 			CONSTANT CHARACTER 'C14N2';
+--         Canonical XML 1.0 (omits comments) 								http://www.w3.org/TR/2001/REC-xml-c14n-20010315
+DECLARE XML_DSIG_CANONICAL_METHOD_ID_C14N1 			CONSTANT CHARACTER 'C14N1';
+--        Canonical XML 1.1 (omits comments)	 								http://www.w3.org/2006/12/xml-c14n11
+DECLARE XML_DSIG_CANONICAL_METHOD_ID_C14N11		CONSTANT CHARACTER 'C14N11';
+--        Exclusive XML Canonicalization 1.0 (omits comments) 	http://www.w3.org/2001/10/xml-exc-c14n#
+DECLARE XML_DSIG_CANONICAL_METHOD_ID_C14N1_EXCLUSIVE			
+																												CONSTANT CHARACTER 'C14N1-Exclusive';
+--        Canonical XML 1.0 with Comments 										http://www.w3.org/TR/2001/REC-xml-c14n-20010315#WithComments
+DECLARE XML_DSIG_CANONICAL_METHOD_ID_C14N1_WITH_COMMENTS 			
+																												CONSTANT CHARACTER 'C14N1-WithComments';
+--        Canonical XML 1.1 with Comments 										http://www.w3.org/2006/12/xml-c14n11#WithComments
+DECLARE XML_DSIG_CANONICAL_METHOD_ID_C14N11_WITH_COMMENTS 			
+																												CONSTANT CHARACTER 'C14N11-WithComments';
+--        Exclusive XML Canonicalization 1.0 with Comments 		http://www.w3.org/2001/10/xml-exc-c14n#WithComments
+DECLARE XML_DSIG_CANONICAL_METHOD_ID_C14N1_WITH_COMMENTS_EXCLUSIVE 			
+																												CONSTANT CHARACTER 'C14N1-WithComments-Exclusive';
+
+--	Selection
+--	        XML Documents or Fragments - http://www.w3.org/2010/xmldsig2#xml	
+DECLARE XML_DSIG_SELECTION_XML_DOCUMENT_FRAGMENT		NAMESPACE	'http://www.w3.org/2010/xmldsig2#xml';
+DECLARE XML_DSIG_SELECTION_BINARY_EXTERNAL							NAMESPACE	'http://www.w3.org/2010/xmldsig2#binaryExternal';
+DECLARE XML_DSIG_SELECTION_BINARY_BASE64									NAMESPACE	'http://www.w3.org/2010/xmldsig2#binaryfromBase64';
+
+
+-- Constants 
+DECLARE MESSAGE_SECURITY_TYPE_MESSAGE_HASHING												CONSTANT CHARACTER 	'Message-Hashing';
+DECLARE MESSAGE_SECURITY_TYPE_XML_SIGNATURE													CONSTANT CHARACTER 	'WSSE-XMLSignature';
+
+DECLARE MESSAGE_SECURITY_TYPE_MESSAGE_ENCRYPTION										CONSTANT CHARACTER 	'Message-Encryption';
+DECLARE MESSAGE_SECURITY_TYPE_MESSAGE_ENCRYPTION_FIELDS_ONLY			CONSTANT CHARACTER 	'Message-Encryption-FieldsOnly';
+DECLARE MESSAGE_SECURITY_TYPE_XML_ENCRYPTION													CONSTANT CHARACTER 	'WSSE-XMLEncryption';
+
+-- 	Key Store Types JDK 8
+-- 	https://docs.oracle.com/javase/8/docs/technotes/guides/security/StandardNames.html#KeyStore
+--		jceks 	The proprietary keystore implementation provided by the SunJCE provider.
+--		jks 	The proprietary keystore implementation provided by the SUN provider.
+--		dks 	A domain keystore is a collection of keystores presented as a single logical keystore. It is specified by configuration data whose syntax is described in DomainLoadStoreParameter.
+--		pkcs11 	A keystore backed by a PKCS #11 token.
+--		pkcs12 	The transfer syntax for personal identity information as defined in PKCS #12: Personal Information Exchange Syntax v1.1.
+
+DECLARE MESSAGE_SECURITY_KEYSTORE_TYPE_JCEKS												CONSTANT CHARACTER 'jceks';
+DECLARE MESSAGE_SECURITY_KEYSTORE_TYPE_JKS														CONSTANT CHARACTER 'jks';
+DECLARE MESSAGE_SECURITY_KEYSTORE_TYPE_DKS													CONSTANT CHARACTER 'dks';
+DECLARE MESSAGE_SECURITY_KEYSTORE_TYPE_PKCS11												CONSTANT CHARACTER 'pkcs11';
+DECLARE MESSAGE_SECURITY_KEYSTORE_TYPE_PKCS12												CONSTANT CHARACTER 'pkcs12';
+
+DECLARE MESSAGE_SECURITY_CIPHER_PUBLIC_KEY 							CONSTANT INTEGER 		1;
+DECLARE MESSAGE_SECURITY_CIPHER_PRIVATE_KEY 							CONSTANT INTEGER 		2;
+DECLARE MESSAGE_SECURITY_CIPHER_SECRET_KEY 							CONSTANT INTEGER 		3;
+
+DECLARE ENCRYPTION_SECRET_STATIC							CONSTANT CHARACTER 'STATIC';
+DECLARE ENCRYPTION_SECRET_RUNTIME					CONSTANT CHARACTER 'RUNTIME';
+
+DECLARE ENCRYPT_ENC_BASE64					CONSTANT CHARACTER 'BASE64';
+DECLARE ENCRYPT_ENC_HEX							CONSTANT CHARACTER 'HEX';
+
+CREATE COMPUTE MODULE CommonAPIMessageSecurity
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		-- CALL CopyMessageHeaders();
+		-- CALL CopyEntireMessage();
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+END MODULE;
+
+	-- [10-Jul-2020]: Convenience Method for Basic Authentication using UserNameToken in SOAP Header.
+	CREATE FUNCTION  secureWSRequestAuthenticate_BasicAuthenticationUserNameToken(IN refAPIRequest REFERENCE, 
+												INOUT refClientAPIRequest REFERENCE,
+												IN refAPIRequestHeader REFERENCE, 
+												INOUT refClientAPIRequestHeader REFERENCE,
+												INOUT refClientWSSOAPHeader REFERENCE,
+												IN refMessageSecurityConfiguration REFERENCE)
+	BEGIN
+		--		<soapEnv11:Envelope xmlns:S11="..." xmlns:wsse="..." xmlns:wsu= "...">
+		--		   <soapEnv11:Header>
+		--		      ...
+		--		      <soapWSSE10:Security>
+		--		         <soapWSSE10:UsernameToken>
+		--		            <soapWSSE10:Username>NNK</soapWSSE10:Username>
+		--		            <soapWSSE10:Password Type="...#PasswordDigest">
+		--		               weYI3nXd8LjMNVksCKFV8t3rgHh3Rw==
+		--		            </soapWSSE10:Password>
+		--		            <soapWSSE10:Nonce>WScqanjCEAC4mQoBE07sAQ==</soapWSSE10:Nonce>
+		--		            <wsu:Created>2003-07-16T01:24:32Z</wsu:Created>
+		--		         </soapWSSE10:UsernameToken>
+		--		      </soapWSSE10:Security>
+		--		      ...
+		--		   </soapEnv11:Header>
+		--		   ...
+		--		</soapEnv11:Envelope>	
+		
+		CREATE FIELD refClientWSSOAPHeader.soapWSSE10:Security.soapWSSE10:UsernameToken;
+		DECLARE refWSSEUserNameToken REFERENCE TO refClientWSSOAPHeader.soapWSSE10:Security.soapWSSE10:UsernameToken;
+		
+		SET refWSSEUserNameToken.soapWSSE10:Username 	= refMessageSecurityConfiguration.CLIENT_API_AUTH_IDENTITY_TOKEN;
+		-- Password can be sent as clear text or digest (hash).
+		IF COALESCE(refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_HASHING_ALGO, '') <> '' THEN
+			SET refWSSEUserNameToken.soapWSSE10:Password 	= com.icici.xpress_connect.common.api.hash
+																	(refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_HASHING_ALGO, 
+																	 CAST(refMessageSecurityConfiguration.CLIENT_API_AUTH_IDENTITY_PWD AS BLOB CCSID 546 ENCODING 1208));
+			SET refWSSEUserNameToken.soapWSSE10:Password.(XMLNSC.Attribute)Type 
+										=  refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_HASHING_ALGO;
+
+			SET refWSSEUserNameToken.soapWSSE10:Nonce = UUIDASCHAR;
+			SET refWSSEUserNameToken.soapWSSEU:Created = CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'I');
+		ELSE
+			SET refWSSEUserNameToken.soapWSSE10:Password 	=  refMessageSecurityConfiguration.CLIENT_API_AUTH_IDENTITY_PWD;
+		END IF;
+		
+	END;
+
+		-- [10-Jul-2020]: Convenience Method for WSSE Signature 2.0 in SOAP Header.
+	-- Currently we restrict this to the following with complete request XML payload (one within soap:Body): 
+	-- Digest:
+	--    SHA1 (Use is DISCOURAGED; see SHA-1 Warning) 		http://www.w3.org/2000/09/xmldsig#sha1
+	--    SHA256 																						http://www.w3.org/2001/04/xmlenc#sha256
+	--    SHA512 																						http://www.w3.org/2001/04/xmlenc#sha512
+	--	Encoding
+	--	        base64  																					http://www.w3.org/2000/09/xmldsig#base64
+	--	MAC
+	--	        HMAC-SHA1 (Use is DISCOURAGED; see SHA-1 Warning) 		http://www.w3.org/2000/09/xmldsig#hmac-sha1
+	--	        HMAC-SHA256  																						http://www.w3.org/2001/04/xmldsig-more#hmac-sha256
+	--	        HMAC-SHA512  																						http://www.w3.org/2001/04/xmldsig-more#hmac-sha512
+	--	Signature
+	--	        RSAwithSHA256 http://www.w3.org/2001/04/xmldsig-more#rsa-sha256 [RFC6931]
+	--	        ECDSAwithSHA256 http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha256 [RFC6931]
+	--	        DSAwithSHA1 (signature verification) http://www.w3.org/2000/09/xmldsig#dsa-sha1 [RFC6931]
+	--	        RSAwithSHA1 (signature verification; use for signature generation is DISCOURAGED; see SHA-1 Warning) http://www.w3.org/2000/09/xmldsig#rsa-sha1
+	--	        RSAwithSHA512 http://www.w3.org/2001/04/xmldsig-more#rsa-sha512
+	--	        DSAwithSHA1 (signature generation) http://www.w3.org/2000/09/xmldsig#dsa-sha1
+	--	        DSAwithSHA256 http://www.w3.org/2009/xmldsig11#dsa-sha256
+
+	--	Canonicalization
+	--	        Canonical XML 2.0	[Not supported for now]
+	--	Transform
+	--	        XML Signature 2.0 Transform - http://www.w3.org/2010/xmldsig2#transform
+	--				base64 				http://www.w3.org/2000/09/xmldsig#base64
+	--	Selection
+	--	        XML Documents or Fragments - http://www.w3.org/2010/xmldsig2#xml	
+	
+		
+	-- If need be, we could go the User Policy way to pack in more variables to build the signature. This is also true for encryption.
+	CREATE FUNCTION  secureWSRequest_XMLSignature20(IN refAPIRequest REFERENCE, 
+												INOUT refClientAPIRequest REFERENCE,
+												IN refAPIRequestHeader REFERENCE, 
+												IN refClientAPIRequestHeader REFERENCE,
+												INOUT refClientWSSOAPHeader REFERENCE,
+												IN refMessageSecurityConfiguration REFERENCE)
+	BEGIN
+
+	--		XML Signatures are applied to arbitrary data objects via an indirection. Data objects are digested, 
+	--		the resulting value is placed in an element (with other information) and that element is then digested 
+	--		and cryptographically signed. XML digital signatures are represented by the Signature element 		
+	--		<Signature ID?> 
+	--		  <SignedInfo>
+	--		    <CanonicalizationMethod />
+	--		    <SignatureMethod />
+	--		   (<Reference URI? >
+	--		     (<Transforms>)?
+	--		      <DigestMethod>
+	--		      <DigestValue>
+	--		    </Reference>)+
+	--		  </SignedInfo>
+	--		  <SignatureValue> 
+	--		 (<KeyInfo>)?
+	--		 (<Object ID?>)*
+	--		</Signature>
+	
+	-- Example:
+	--			<?xml version="1.0" encoding="UTF-8"?>
+	--			 <soap:Envelope
+	--				xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" 
+	--				xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
+	--			   <soap:Header>
+	--			     <wsse:Security xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
+	--			       <wsse:BinarySecurityToken wsu:Id="MyID"   
+	--			 					ValueType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-x509-token-profile-1.0#X509v3"	
+	--			 					EncodingType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-x509-token-profile-1.0#Base64Binary">
+	--			         MIIEZzCCA9CgAwIBAgIQEmtJZc0..
+	--			       </wsse:BinarySecurityToken>
+	--			       <ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+	--			         <ds:SignedInfo>
+	--			           <ds:CanonicalizationMethod Algorithm="http://www.w3.org/2010/xml-c14n2"     
+	--			 					xmlns:c14n2="http://www.w3.org/2010/xml-c14n2">
+	--			             <c14n2:IgnoreComments>true</c14n2:IgnoreComments>
+	--			             <c14n2:TrimTextNodes>false</c14n2:TrimTextNodes>
+	--			             <c14n2:PrefixRewrite>none</c14n2:PrefixRewrite>
+	--			             <c14n2:QNameAware/>
+	--			           </ds:CanonicalizationMethod>
+	--			           <ds:SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/>
+	--			           <ds:Reference>
+	--			             <ds:Transforms>
+	--			               <ds:Transform Algorithm="http://www.w3.org/2010/xmldsig2#newTransformModel" 
+	--													  xmlns:dsig2="http://www.w3.org/2010/xmldsig2#">
+	--			                 <dsig2:Selection Algorithm="http://www.w3.org/2010/xmldsig2#xml" URI="#MsgBody" />
+	--			                 <dsig2:Canonicalization >
+	--			                   <c14n2:IgnoreComments>true</c14n2:IgnoreComments>
+	--			                   <c14n2:TrimTextNodes>true</c14n2:TrimTextNodes>
+	--			                   <c14n2:PrefixRewrite>sequential</c14n2:PrefixRewrite>
+	--			                   <c14n2:QNameAware/>
+	--			                 </dsig2:Canonicalization>
+	--			                 <dsig2:Verifications>
+	--			                   <dsig2:Verification DigestDataLength="308"/>
+	--			                 </dsig2:Verifications>
+	--			               </ds:Transform>
+	--			             </ds:Transforms>
+	--			             <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
+	--			             <ds:DigestValue>dGhpcyBpcyBub3QgYSBzaWduYXR1cmUK...</ds:DigestValue>
+	--			           </ds:Reference>
+	--			         </ds:SignedInfo>
+	--			         <ds:SignatureValue>kdutrEsAEw56Sefgs34...</ds:SignatureValue>
+	--			         <ds:KeyInfo>
+	--			           <ds:KeyValue>
+	--			             <wsse:SecurityTokenReference>
+	--			               <wsse:Reference URI="#MyID"/>
+	--			             </wsse:SecurityTokenReference>
+	--			           </ds:KeyValue>
+	--			         </ds:KeyInfo>
+	--			       </ds:Signature>
+	--			     </wsse:Security>
+	--			   </soap:Header>
+	--			   <soap:Body wsu:Id="MsgBody">
+	--			     <ex:ProcessPayment xmlns:ex="http://www.example.com/">
+	--			       <ex:ClientCode>ADAN</ex:ClientCode>
+	--			       <ex:BeneficiaryAccountName>RAMAN KUMAR</ex:BeneficiaryAccountName>
+	--			     </ex:ProcessPayment>
+	--			   </soap:Body>
+	--			 </soap:Envelope>	
+	
+			-- [10-Jul-2020]: Complete XML payload (one within soap:Body).
+			-- DECLARE chMessagePayload BLOB ASBITSTREAM (refClientAPIRequest.Body.*:{CLIENT_API_MESSAGE_REQUEST_ROOT}, 546, 1208, '', '', '', FolderBitStream);
+			DECLARE bMessagePayload BLOB ASBITSTREAM (refClientAPIRequest, 546, 1208, '', '', '', FolderBitStream);
+			
+			DECLARE chMessagePayload CHARACTER CAST (bMessagePayload AS CHARACTER 
+															CCSID refMessageSecurityConfiguration.CodedCharSetId  ENCODING refMessageSecurityConfiguration.Encoding);
+															
+			DECLARE refNamespaces REFERENCE TO refMessageSecurityConfiguration.Namespaces;
+			
+			SET chMessagePayload = com.icici.xpress_connect.common.api.canonicalizeXml(chMessagePayload, 
+						wsseGetCanonicalizationMethodURI(refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_XMLDSIG_CANONICALIZATION), NULL, refNamespaces);
+			
+			CREATE LASTCHILD OF refClientWSSOAPHeader DOMAIN('XMLNSC') NAMESPACE soapWSSE10 NAME 'Security';
+			DECLARE refWSSESecurity REFERENCE TO refClientWSSOAPHeader.soapWSSE10:Security;
+			
+			SET refWSSESecurity.soapWSSE10:BinarySecurityToken.(XMLNSC.Attribute)soapWSSEU:Id = 'IXC_' || refMessageSecurityConfiguration.KEY_ID || '_PubKey';
+			SET refWSSESecurity.soapWSSE10:BinarySecurityToken.(XMLNSC.Attribute)soapWSSEU:ValueType = XML_DSIG_TOKEN_TYPE_X503;
+			SET refWSSESecurity.soapWSSE10:BinarySecurityToken.(XMLNSC.Attribute)soapWSSEU:EncodingType = XML_DSIG_ENCODING_X509_TOKEN_BASE64;
+			SET refWSSESecurity.soapWSSE10:BinarySecurityToken = getKeyStringify(
+										COALESCE(refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_KEYSTORE_TYPE, 
+															  refMessageSecurityConfiguration.DEFAULT_MESSAGE_SECURITY_KEYSTORE_TYPE),
+										COALESCE(refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_KEYSTORE_NAME, 
+															  refMessageSecurityConfiguration.DEFAULT_MESSAGE_SECURITY_KEYSTORE_NAME),
+										COALESCE(refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_KEYSTORE_PATH, 
+															  refMessageSecurityConfiguration.DEFAULT_MESSAGE_SECURITY_KEYSTORE_PATH),
+										refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_KEYSTORE_PASSWORD,
+										1,		-- Public Key: 1, Private Key: 2, Secret Key: 3
+										refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_KEY_ALIAS_NAME,
+										COALESCE(refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_KEY_PASSWORD, 
+															  refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_KEYSTORE_PASSWORD),
+										'base64'
+										); -- Get X509 Public Key from Keystore.
+			
+			CREATE FIELD refWSSESecurity.XML_DSIG:Signature.XML_DSIG:SignedInfo;
+			DECLARE refSignedInfo REFERENCE TO refWSSESecurity.XML_DSIG:Signature.XML_DSIG:SignedInfo;
+			
+			SET refSignedInfo.XML_DSIG:CanonicalizationMethod.(XMLNSC.Attribute) Algorithm 	= wsseGetCanonicalizationMethodURI(refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_XMLDSIG_CANONICALIZATION);     
+			SET refSignedInfo.XML_DSIG:SignatureMethod.(XMLNSC.Attribute) Algorithm 				= 
+							wsseGetSignatureMethodURI(refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_HASHING_ALGO, 
+																					refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_ENCRYPTION_ALGO);     
+			
+			CREATE FIELD  refSignedInfo.XML_DSIG:Reference.XML_DSIG:Transforms.XML_DSIG:Transform;
+			DECLARE refTransform REFERENCE TO  refSignedInfo.XML_DSIG:Reference.XML_DSIG:Transforms.XML_DSIG:Transform;
+																					
+			SET refTransform.(XMLNSC.Attribute)Algorithm = 
+						wsseGetTransformAlgoURI(refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_XMLDSIG_TRANSFORM);
+			SET refTransform.XML_DSIG20:Selection.(XMLNSC.Attribute)Algorithm = wsseGetSelectionAlgoURI(refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_XMLDSIG_SELECTION);
+			SET refTransform.XML_DSIG20:Selection.(XMLNSC.Attribute)URI = 'Sign-' || UUIDASCHAR;
+			
+			SET refSignedInfo.XML_DSIG:Reference.XML_DSIG:DigestMethod.(XMLNSC.Attribute)Algorithm = 
+						wsseGetDigestAlgoURI(refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_XMLDSIG_DIGEST);
+			SET refSignedInfo.XML_DSIG:Reference.XML_DSIG:DigestValue = 
+						com.icici.xpress_connect.common.api.hash(refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_HASHING_ALGO, bMessagePayload);
+
+			SET refWSSESecurity.XML_DSIG:Signature.XML_DSIG:SignatureValue = 
+					com.icici.xpress_connect.common.api.sign(
+										COALESCE(refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_KEYSTORE_TYPE, 
+												refMessageSecurityConfiguration.DEFAULT_MESSAGE_SECURITY_KEYSTORE_TYPE),
+										COALESCE(refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_KEYSTORE_NAME, 
+												refMessageSecurityConfiguration.DEFAULT_MESSAGE_SECURITY_KEYSTORE_NAME),
+										COALESCE(refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_KEYSTORE_PATH, 
+												refMessageSecurityConfiguration.DEFAULT_MESSAGE_SECURITY_KEYSTORE_PATH),
+										refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_KEYSTORE_PASSWORD,
+										refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_KEY_ALIAS_NAME,
+										COALESCE(refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_KEY_PASSWORD, 
+												refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_KEYSTORE_PASSWORD),
+										refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_XMLDSIG_SIGNATURE, 
+										FIELDVALUE(refSignedInfo.XML_DSIG:Reference.XML_DSIG:DigestValue));
+
+			SET refWSSESecurity.XML_DSIG:Signature.XML_DSIG:KeyInfo.XML_DSIG:KeyValue.
+					soapWSSE10:SecurityTokenReference.soapWSSE10:Reference.(XMLNSC.Attribute)URI = 
+					refWSSESecurity.soapWSSE10:BinarySecurityToken.(XMLNSC.Attribute)soapWSSEU:Id;
+					
+--			SET refClientAPIRequest.Body.*:{refMessageSecurityConfiguration.CLIENT_API_MESSAGE_REQUEST_ROOT}.(XMLNSC.Attribute) soapWSSEU:Id = 
+--					refTransform.XML_DSIG20:Selection.(XMLNSC.Attribute)URI;
+
+			SET refClientAPIRequest.(XMLNSC.Attribute) soapWSSEU:Id = refTransform.XML_DSIG20:Selection.(XMLNSC.Attribute)URI;
+
+	END;
+
+	-- Canonicalization Method URI
+	CREATE FUNCTION wsseGetCanonicalizationMethodURI(IN canonicalizationMethId CHARACTER) 
+	RETURNS CHARACTER 
+	BEGIN
+		IF canonicalizationMethId = XML_DSIG_CANONICAL_METHOD_ID_C14N2 THEN
+			RETURN XML_DSIG_CANONICAL_METHOD_C14N2;
+		ELSEIF canonicalizationMethId = XML_DSIG_CANONICAL_METHOD_ID_C14N1 THEN
+			RETURN XML_DSIG_CANONICAL_METHOD_C14N1;
+		ELSEIF canonicalizationMethId = XML_DSIG_CANONICAL_METHOD_ID_C14N11 THEN
+			RETURN XML_DSIG_CANONICAL_METHOD_C14N11;
+		ELSEIF canonicalizationMethId = XML_DSIG_CANONICAL_METHOD_ID_C14N1_EXCLUSIVE	THEN
+			RETURN XML_DSIG_CANONICAL_METHOD_C14N1_EXCLUSIVE;
+		ELSEIF canonicalizationMethId = XML_DSIG_CANONICAL_METHOD_ID_C14N1_WITH_COMMENTS THEN
+			RETURN XML_DSIG_CANONICAL_METHOD_C14N1_WITH_COMMENTS;
+		ELSEIF canonicalizationMethId = XML_DSIG_CANONICAL_METHOD_ID_C14N11_WITH_COMMENTS 	THEN
+			RETURN XML_DSIG_CANONICAL_METHOD_C14N11_WITH_COMMENTS;
+		ELSEIF canonicalizationMethId = XML_DSIG_CANONICAL_METHOD_ID_C14N1_WITH_COMMENTS_EXCLUSIVE 	THEN
+			RETURN XML_DSIG_CANONICAL_METHOD_C14N1_WITH_COMMENTS_EXCLUSIVE;
+		END IF;	
+	
+	END;
+	
+	-- Message Digest Algorithm URI	
+	CREATE FUNCTION wsseGetDigestAlgoURI (IN digest CHARACTER) 
+	RETURNS CHARACTER
+	BEGIN
+		IF digest = 'SHA-1' THEN
+			RETURN XML_DSIG_DIGEST_SHA1;
+		ELSEIF digest = 'SHA-224' THEN
+			RETURN XML_DSIG_DIGEST_SHA224;
+		ELSEIF digest = 'SHA-256' THEN
+			RETURN XML_DSIG_DIGEST_SHA256;
+		ELSEIF digest = 'SHA-384' THEN
+			RETURN XML_DSIG_DIGEST_SHA384;
+		ELSEIF digest = 'SHA-512' THEN
+			RETURN XML_DSIG_DIGEST_SHA512;
+		END IF;
+	END;
+	
+	-- Message Part Selection Algorithm URI
+	CREATE FUNCTION wsseGetSelectionAlgoURI (IN selectionType CHARACTER) 
+	RETURNS CHARACTER
+	BEGIN
+		IF selectionType = 'XML-Document-Fragment' THEN
+			RETURN XML_DSIG_SELECTION_XML_DOCUMENT_FRAGMENT;
+		ELSEIF selectionType = 'Binary-External' THEN
+			RETURN XML_DSIG_SELECTION_BINARY_EXTERNAL;
+		ELSEIF selectionType = 'Binary-Base64' THEN
+			RETURN XML_DSIG_SELECTION_BINARY_BASE64;
+		END IF;
+	END;
+	
+	-- Transformation Algorithm URI
+	CREATE FUNCTION wsseGetTransformAlgoURI (IN transformType CHARACTER) 
+	RETURNS CHARACTER
+	BEGIN
+		IF transformType = 'BASE64' THEN
+			RETURN XML_DSIG_TRANSFORM_BASE64;
+		ELSEIF transformType = 'XMLSIG20' THEN
+			RETURN XML_DSIG_TRANSFORM_XMLSIGN20;
+		ELSEIF transformType = 'ENVELOPED-SIGN' THEN
+			RETURN XML_DSIG_TRANSFORM_ENVELOPED_SIGNATURE;
+		ELSEIF transformType = 'XPATH' THEN
+			RETURN XML_DSIG_TRANSFORM_XPATH;
+		ELSEIF transformType = 'XSLT' THEN
+			RETURN XML_DSIG_TRANSFORM_XSLT;
+		END IF;
+	END;
+	
+	-- Signature Method Algorithm URI
+	CREATE FUNCTION wsseGetSignatureMethodURI(IN hashingAlgo CHARACTER, IN encryptionAlgo CHARACTER) 
+	RETURNS CHARACTER
+	BEGIN
+		IF STARTSWITH(encryptionAlgo, 'RSA') AND COALESCE(hashingAlgo, '') = 'SHA-256' THEN
+			RETURN XML_DSIG_SIGN_RSAwithSHA256;
+		ELSEIF STARTSWITH(encryptionAlgo, 'DSA') AND COALESCE(hashingAlgo, '') = 'SHA-1' THEN
+			RETURN XML_DSIG_SIGN_DSAwithSHA1;
+		ELSEIF STARTSWITH(encryptionAlgo, 'RSA') AND COALESCE(hashingAlgo, '') = 'SHA-1' THEN
+			RETURN XML_DSIG_SIGN_RSAwithSHA1;
+		ELSEIF STARTSWITH(encryptionAlgo, 'RSA') AND COALESCE(hashingAlgo, '') = 'SHA-512' THEN
+			RETURN XML_DSIG_SIGN_RSAwithSHA512;
+		ELSEIF STARTSWITH(encryptionAlgo, 'DSA') AND COALESCE(hashingAlgo, '') = 'SHA-256' THEN
+			RETURN XML_DSIG_SIGN_DSAwithSHA256;
+		ELSEIF STARTSWITH(encryptionAlgo, 'RSA') AND COALESCE(hashingAlgo, '') = 'SHA-224' THEN
+			RETURN XML_DSIG_SIGN_RSAwithSHA224;
+		ELSEIF STARTSWITH(encryptionAlgo, 'RSA') AND COALESCE(hashingAlgo, '') = 'SHA-384' THEN
+			RETURN XML_DSIG_SIGN_RSAwithSHA384;
+
+		-- ECDSA
+		ELSEIF STARTSWITH(encryptionAlgo, 'ECDSA') AND COALESCE(hashingAlgo, '') = 'SHA-1' THEN
+			RETURN XML_DSIG_SIGN_ECDSAwithSHA1;
+		ELSEIF STARTSWITH(encryptionAlgo, 'ECDSA') AND COALESCE(hashingAlgo, '') = 'SHA-224' THEN
+			RETURN XML_DSIG_SIGN_ECDSAwithSHA224;
+		ELSEIF STARTSWITH(encryptionAlgo, 'ECDSA') AND COALESCE(hashingAlgo, '') = 'SHA-256' THEN
+			RETURN XML_DSIG_SIGN_ECDSAwithSHA256;
+		ELSEIF STARTSWITH(encryptionAlgo, 'ECDSA') AND COALESCE(hashingAlgo, '') = 'SHA-384' THEN
+			RETURN XML_DSIG_SIGN_ECDSAwithSHA384;
+		ELSEIF STARTSWITH(encryptionAlgo, 'ECDSA') AND COALESCE(hashingAlgo, '') = 'SHA-512' THEN
+			RETURN XML_DSIG_SIGN_ECDSAwithSHA512;
+		END IF;
+		
+	END;
+	
+	-- Convenience method to encrypt message fields.
+	CREATE FUNCTION encryptMessageFields(INOUT refMessage REFERENCE, IN refMessageSecurityConfiguration REFERENCE)  
+	BEGIN
+				DECLARE cipherAlgo 					CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_ENCRYPTION_ALGO;
+				DECLARE cipherAlgoMode 			CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_ENCRYPTION_ALGO_MODE;
+				DECLARE cipherAlgoPadding 	CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_ENCRYPTION_ALGO_PADDING;
+				DECLARE encryptionEncoding	CHARACTER 	COALESCE(refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_ENCRYPTION_ENCODING, 
+																															   ENCRYPT_ENC_BASE64);
+				DECLARE paddingType 				INTEGER 			0;
+																			-- refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_ENCRYPTION_ALGO_CUSTOM_PADDING;
+				DECLARE ivHex 								CHARACTER	NULL;		-- Not applicable for RSA.
+
+				DECLARE keyStoreType 				CHARACTER 	NULL;
+				DECLARE keyStoreName 				CHARACTER 	NULL;
+				DECLARE keyStorePath 				CHARACTER 	NULL;
+				DECLARE keyStorePassword 		CHARACTER 	NULL;
+				DECLARE keyType 						INTEGER			0;
+				DECLARE keyAliasName 				CHARACTER 	NULL;
+				DECLARE keyPassword  				CHARACTER 	NULL;
+
+				IF isAsymmetricEncryption(cipherAlgo) THEN
+					-- Use customer's PUBLIC key
+					SET keyStoreType 				=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_KEYSTORE_TYPE;
+					SET keyStoreName 				=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_KEYSTORE_NAME;
+					SET keyStorePath 				=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_KEYSTORE_PATH;
+					SET keyStorePassword 		=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_KEYSTORE_PASSWORD;
+					SET keyType 						=	MESSAGE_SECURITY_CIPHER_PUBLIC_KEY;	-- customer RSA PUBLIC key.
+					SET keyAliasName 				=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_PUBLIC_KEY_ALIAS_NAME;
+					SET keyPassword  				=	NULL; 		-- Not applicable for PUBLIC keys.
+					SET ivHex 								=	NULL;		-- Not applicable for RSA.
+				ELSE
+					-- Used SHARED SECRET key.
+					SET keyStoreType 				=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRET_KEYSTORE_TYPE;
+					SET keyStoreName 				=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRET_KEYSTORE_NAME;
+					SET keyStorePath 				=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRET_KEYSTORE_PATH;
+					SET keyStorePassword 		=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRET_KEYSTORE_PASSWORD;
+					SET keyType 						=	MESSAGE_SECURITY_CIPHER_SECRET_KEY;	-- SHARED SECRET key.
+					SET keyAliasName 				=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRET_KEY_ALIAS_NAME;
+					SET keyPassword  				=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRET_KEY_PASSWORD;
+					
+					DECLARE ivSizeBits 			INTEGER getDefaultIVSize(cipherAlgo, cipherAlgoMode, cipherAlgoPadding)/8;
+					SET ivHex 								=	ivHexString(NULL, ivSizeBits);
+
+					SET refMessageSecurityConfiguration.IV_HEX = COALESCE(ivHex, ''); -- Need to return it for mapping it back to the client API request. Only for SECRET key.
+				END IF;		
+			
+			DECLARE I INTEGER 1;
+			DECLARE J INTEGER;
+			SET J = CARDINALITY(refMessage.*[]);
+			WHILE I <= J DO
+			 IF FIELDTYPE(refMessage.*[I]) <> XMLNSC.NamespaceDecl THEN
+				DECLARE value CHARACTER COALESCE(CAST(refMessage.*[I] AS CHARACTER), '');
+				IF COALESCE(value,  '') <> '' THEN
+					DECLARE secureValue CHARACTER COALESCE(
+					com.icici.xpress_connect.common.api.encrypt(
+								keyStoreType, keyStoreName, keyStorePath, keyStorePassword, keyType, keyAliasName, keyPassword, 
+								value, cipherAlgo, cipherAlgoMode, cipherAlgoPadding, encryptionEncoding,  paddingType, ivHex), '');
+					IF secureValue = '' THEN
+						THROW USER EXCEPTION CATALOG 'BIPMsgs' MESSAGE 6000 VALUES ('Unable to secure the message using ' 
+						|| cipherAlgo || '/' || cipherAlgoMode || '/' || cipherAlgoPadding || '. Validate the cipher combination and the IV (shared secret only).');
+					ELSE 	 			
+						SET refMessage.*[I] = 	secureValue;
+					END IF;	-- secure value not null check
+				END IF; -- value not null check
+			 END IF;
+				SET I = I + 1;
+			END WHILE;
+
+	END;
+
+	-- Convenience method to encrypt a single message field value.
+	CREATE FUNCTION encryptValue(IN value CHARACTER, IN refMessageSecurityConfiguration REFERENCE)  
+	RETURNS CHARACTER
+	BEGIN
+				DECLARE cipherAlgo 					CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_ENCRYPTION_ALGO;
+				DECLARE cipherAlgoMode 			CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_ENCRYPTION_ALGO_MODE;
+				DECLARE cipherAlgoPadding 	CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_ENCRYPTION_ALGO_PADDING;
+				DECLARE encryptionEncoding	CHARACTER 	COALESCE(refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_ENCRYPTION_ENCODING, 
+																															   ENCRYPT_ENC_BASE64);
+				DECLARE paddingType 				INTEGER 			0;
+																			-- refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_ENCRYPTION_ALGO_CUSTOM_PADDING;
+				DECLARE ivHex 								CHARACTER	NULL;		-- Not applicable for RSA.
+
+				DECLARE keyStoreType 				CHARACTER 	NULL;
+				DECLARE keyStoreName 				CHARACTER 	NULL;
+				DECLARE keyStorePath 				CHARACTER 	NULL;
+				DECLARE keyStorePassword 		CHARACTER 	NULL;
+				DECLARE keyType 						INTEGER			0;
+				DECLARE keyAliasName 				CHARACTER 	NULL;
+				DECLARE keyPassword  				CHARACTER 	NULL;
+
+				IF isAsymmetricEncryption(cipherAlgo) THEN
+					-- Use customer's PUBLIC key
+					SET keyStoreType 				=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_KEYSTORE_TYPE;
+					SET keyStoreName 				=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_KEYSTORE_NAME;
+					SET keyStorePath 				=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_KEYSTORE_PATH;
+					SET keyStorePassword 		=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_KEYSTORE_PASSWORD;
+					SET keyType 						=	MESSAGE_SECURITY_CIPHER_PUBLIC_KEY;	-- customer RSA PUBLIC key.
+					SET keyAliasName 				=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_PUBLIC_KEY_ALIAS_NAME;
+					SET keyPassword  				=	NULL; 		-- Not applicable for PUBLIC keys.
+					SET ivHex 								=	NULL;		-- Not applicable for RSA.
+				ELSE
+					-- Used SHARED SECRET key.
+					SET keyStoreType 				=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRET_KEYSTORE_TYPE;
+					SET keyStoreName 				=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRET_KEYSTORE_NAME;
+					SET keyStorePath 				=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRET_KEYSTORE_PATH;
+					SET keyStorePassword 		=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRET_KEYSTORE_PASSWORD;
+					SET keyType 						=	MESSAGE_SECURITY_CIPHER_SECRET_KEY;	-- SHARED SECRET key.
+					SET keyAliasName 				=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRET_KEY_ALIAS_NAME;
+					SET keyPassword  				=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRET_KEY_PASSWORD;
+					
+					DECLARE ivSizeBits 			INTEGER getDefaultIVSize(cipherAlgo, cipherAlgoMode, cipherAlgoPadding)/8;
+					SET ivHex 								=	ivHexString(NULL, ivSizeBits);
+
+					SET refMessageSecurityConfiguration.IV_HEX = COALESCE(ivHex, ''); -- Need to return it for mapping it back to the client API request. Only for SECRET key.
+				END IF;		
+			
+				DECLARE secureValue CHARACTER COALESCE(com.icici.xpress_connect.common.api.encrypt(
+							keyStoreType, keyStoreName, keyStorePath, keyStorePassword, keyType, keyAliasName, keyPassword, 
+							value, cipherAlgo, cipherAlgoMode, cipherAlgoPadding, encryptionEncoding,  paddingType, ivHex), '');
+							
+				IF secureValue = '' THEN
+					THROW USER EXCEPTION CATALOG 'BIPMsgs' MESSAGE 6000 VALUES ('Unable to secure the message using ' 
+					|| cipherAlgo || '/' || cipherAlgoMode || '/' || cipherAlgoPadding || '. Validate the cipher combination and the IV (shared secret only).');
+				ELSE
+					RETURN secureValue;
+				END IF;	-- secure value not null check
+	END;
+
+
+	-- Convenience method to decrypt message fields.
+	CREATE FUNCTION decryptMessageFields(INOUT refMessage REFERENCE, IN refMessageSecurityConfiguration REFERENCE)  
+	BEGIN
+			DECLARE cipherAlgo 					CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_ENCRYPTION_ALGO;
+			DECLARE cipherAlgoMode 			CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_ENCRYPTION_ALGO_MODE;
+			DECLARE cipherAlgoPadding 	CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_ENCRYPTION_ALGO_PADDING;
+			DECLARE encryptionEncoding	CHARACTER 	COALESCE(refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_ENCRYPTION_ENCODING, 
+																														   ENCRYPT_ENC_BASE64);
+			DECLARE paddingType 				INTEGER 			0;
+																		-- refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_ENCRYPTION_ALGO_CUSTOM_PADDING;
+			DECLARE ivHex 								CHARACTER	NULL;		-- Not applicable for RSA.
+
+			DECLARE keyStoreType 				CHARACTER 	NULL;
+			DECLARE keyStoreName 				CHARACTER 	NULL;
+			DECLARE keyStorePath 				CHARACTER 	NULL;
+			DECLARE keyStorePassword 		CHARACTER 	NULL;
+			DECLARE keyType 						INTEGER			0;
+			DECLARE keyAliasName 				CHARACTER 	NULL;
+			DECLARE keyPassword  				CHARACTER 	NULL;
+
+			IF isAsymmetricEncryption(cipherAlgo) THEN
+				-- Use customer's PUBLIC key
+				SET keyStoreType 				=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_KEYSTORE_TYPE;
+				SET keyStoreName 				=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_KEYSTORE_NAME;
+				SET keyStorePath 				=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_KEYSTORE_PATH;
+				SET keyStorePassword 		=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_KEYSTORE_PASSWORD;
+				SET keyType 						=	MESSAGE_SECURITY_CIPHER_PRIVATE_KEY;	-- our RSA PRIVATE  key.
+				SET keyAliasName 				=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_PRIVATE_KEY_ALIAS_NAME;
+				SET keyPassword  				=	NULL; 		-- Not applicable for PUBLIC keys.
+				SET ivHex 								=	NULL;		-- Not applicable for RSA.
+			ELSE
+				-- Used SHARED SECRET key.
+				SET keyStoreType 				=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRET_KEYSTORE_TYPE;
+				SET keyStoreName 				=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRET_KEYSTORE_NAME;
+				SET keyStorePath 				=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRET_KEYSTORE_PATH;
+				SET keyStorePassword 		=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRET_KEYSTORE_PASSWORD;
+				SET keyType 						=	MESSAGE_SECURITY_CIPHER_SECRET_KEY;	-- SHARED SECRET key.
+				SET keyAliasName 				=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRET_KEY_ALIAS_NAME;
+				SET keyPassword  				=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRET_KEY_PASSWORD;
+				SET ivHex 								=	refMessageSecurityConfiguration.IV_HEX; -- Need to extract it from the client API response. Only for SECRET key.
+				
+			END IF;		
+			
+			DECLARE I INTEGER 1;
+			DECLARE J INTEGER;
+			SET J = CARDINALITY(refMessage.*[]);
+			WHILE I <= J DO
+			  IF FIELDTYPE(refMessage.*[I]) <> XMLNSC.NamespaceDecl THEN	
+				DECLARE secureValue CHARACTER COALESCE(CAST(refMessage.*[I] AS CHARACTER), '');
+				IF COALESCE(secureValue,  '') <> '' THEN
+					DECLARE value CHARACTER COALESCE(
+						com.icici.xpress_connect.common.api.decrypt(
+								keyStoreType, keyStoreName, keyStorePath, keyStorePassword, keyType, keyAliasName, keyPassword, 
+								secureValue, encryptionEncoding, cipherAlgo, cipherAlgoMode, cipherAlgoPadding, ivHex), '');
+					IF value = '' THEN
+						THROW USER EXCEPTION CATALOG 'BIPMsgs' MESSAGE 6000 VALUES ('Unable to read the message using ' 
+						|| cipherAlgo || '/' || cipherAlgoMode || '/' || cipherAlgoPadding || '. Validate the cipher combination and the IV (shared secret only).');
+					ELSE 	 			
+						SET refMessage.*[I] = 	value;
+					END IF;	-- value not null check
+				END IF;	-- secure value not null check
+			  END IF;	
+				SET I = I + 1;
+			END WHILE;
+
+	END;
+
+	-- Convenience method to decrypt a single message field value.
+	CREATE FUNCTION decryptValue(IN secureValue REFERENCE, IN refMessageSecurityConfiguration REFERENCE) 
+	RETURNS CHARACTER
+	BEGIN
+			DECLARE cipherAlgo 					CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_ENCRYPTION_ALGO;
+			DECLARE cipherAlgoMode 			CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_ENCRYPTION_ALGO_MODE;
+			DECLARE cipherAlgoPadding 	CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_ENCRYPTION_ALGO_PADDING;
+			DECLARE encryptionEncoding	CHARACTER 	COALESCE(refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_ENCRYPTION_ENCODING, 
+																														   ENCRYPT_ENC_BASE64);
+			DECLARE paddingType 				INTEGER 			0;
+																		-- refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_ENCRYPTION_ALGO_CUSTOM_PADDING;
+			DECLARE ivHex 								CHARACTER	NULL;		-- Not applicable for RSA.
+
+			DECLARE keyStoreType 				CHARACTER 	NULL;
+			DECLARE keyStoreName 				CHARACTER 	NULL;
+			DECLARE keyStorePath 				CHARACTER 	NULL;
+			DECLARE keyStorePassword 		CHARACTER 	NULL;
+			DECLARE keyType 						INTEGER			0;
+			DECLARE keyAliasName 				CHARACTER 	NULL;
+			DECLARE keyPassword  				CHARACTER 	NULL;
+
+			IF isAsymmetricEncryption(cipherAlgo) THEN
+				-- Use customer's PUBLIC key
+				SET keyStoreType 				=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_KEYSTORE_TYPE;
+				SET keyStoreName 				=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_KEYSTORE_NAME;
+				SET keyStorePath 				=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_KEYSTORE_PATH;
+				SET keyStorePassword 		=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_KEYSTORE_PASSWORD;
+				SET keyType 						=	MESSAGE_SECURITY_CIPHER_PRIVATE_KEY;	-- our RSA PRIVATE  key.
+				SET keyAliasName 				=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_PRIVATE_KEY_ALIAS_NAME;
+				SET keyPassword  				=	NULL; 		-- Not applicable for PUBLIC keys.
+				SET ivHex 								=	NULL;		-- Not applicable for RSA.
+			ELSE
+				-- Used SHARED SECRET key.
+				SET keyStoreType 				=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRET_KEYSTORE_TYPE;
+				SET keyStoreName 				=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRET_KEYSTORE_NAME;
+				SET keyStorePath 				=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRET_KEYSTORE_PATH;
+				SET keyStorePassword 		=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRET_KEYSTORE_PASSWORD;
+				SET keyType 						=	MESSAGE_SECURITY_CIPHER_SECRET_KEY;	-- SHARED SECRET key.
+				SET keyAliasName 				=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRET_KEY_ALIAS_NAME;
+				SET keyPassword  				=	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRET_KEY_PASSWORD;
+				SET ivHex 								=	refMessageSecurityConfiguration.IV_HEX; -- Need to extract it from the client API response. Only for SECRET key.
+				
+			END IF;		
+			
+		DECLARE value CHARACTER COALESCE(
+			com.icici.xpress_connect.common.api.decrypt(
+					keyStoreType, keyStoreName, keyStorePath, keyStorePassword, keyType, keyAliasName, keyPassword, 
+					secureValue, encryptionEncoding, cipherAlgo, cipherAlgoMode, cipherAlgoPadding, ivHex), '');
+
+		IF value = '' THEN
+			THROW USER EXCEPTION CATALOG 'BIPMsgs' MESSAGE 6000 VALUES ('Unable to read the message using ' 
+			|| cipherAlgo || '/' || cipherAlgoMode || '/' || cipherAlgoPadding || '. Validate the cipher combination and the IV (shared secret only).');
+		ELSE 	 			
+			RETURN value;
+		END IF;	-- value not null check
+	END;
+
+
+	-- Convenience method to encrypt message payload.
+	CREATE FUNCTION encryptMessagePayload(IN refMessage REFERENCE, IN refMessageSecurityConfiguration REFERENCE, INOUT encryptionResult REFERENCE)  
+	BEGIN
+		
+		DECLARE ccsid 								INTEGER COALESCE(refMessageSecurityConfiguration.CodedCharSetId, 1208);
+		DECLARE encoding 						INTEGER COALESCE(refMessageSecurityConfiguration.Encoding, 546);
+
+		DECLARE chMessagePayload 		CHARACTER 	CAST(ASBITSTREAM (refMessage, encoding, ccsid, '', '', '', FolderBitStream) AS CHARACTER CCSID ccsid ENCODING encoding);
+		DECLARE encMessagePayload 	CHARACTER 	NULL;
+
+		DECLARE keyType 						INTEGER			MESSAGE_SECURITY_CIPHER_SECRET_KEY;
+
+		DECLARE cipherAlgo 					CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_ENCRYPTION_ALGO;
+		DECLARE cipherAlgoMode 			CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_ENCRYPTION_ALGO_MODE;
+		DECLARE cipherAlgoPadding 	CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_ENCRYPTION_ALGO_PADDING;
+		
+		DECLARE encryptionEncoding 	CHARACTER 	COALESCE(refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_ENCRYPTION_ENCODING, 
+																													   ENCRYPT_ENC_BASE64);
+		DECLARE paddingType 				INTEGER 			0;
+																	-- refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_ENCRYPTION_ALGO_CUSTOM_PADDING;
+
+		DECLARE keyGenPolicy 				CHARACTER refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_ENCRYPTION_SECRET_KEYGEN;
+
+		DECLARE defaultIVSize 				INTEGER 			getDefaultIVSize(cipherAlgo, cipherAlgoMode, cipherAlgoPadding);
+		DECLARE ivHex 								CHARACTER	ivHexString(null, defaultIVSize/8);			-- SecureRandom
+		
+		DECLARE secretKeyHexOutput				CHARACTER	NULL;		-- used only if encryption SHARED SECRET key is generated at runtime.
+
+		SET encryptionResult.encryption_encoding = encryptionEncoding;
+		SET encryptionResult.encryption_cipher = cipherAlgo || '/' || COALESCE(cipherAlgoMode, '') || '/' || COALESCE(cipherAlgoPadding, '');
+		SET encryptionResult.encryption_iv  =  encode(decode(ivHex, 'hex'), encryptionEncoding);
+
+		IF  keyGenPolicy = 'STATIC' THEN
+			-- Keystore has AES / DES / 3DES SHARED SECRET key.
+
+			DECLARE keyStoreType 				CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRET_KEYSTORE_TYPE;
+			DECLARE keyStoreName 				CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRET_KEYSTORE_NAME;
+			DECLARE keyStorePath 				CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRET_KEYSTORE_PATH;
+			DECLARE keyStorePassword 		CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRET_KEYSTORE_PASSWORD;
+	
+			DECLARE keyAliasName 				CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRET_KEY_ALIAS_NAME;
+			DECLARE keyPassword  				CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRET_KEY_PASSWORD;
+
+			SET encMessagePayload = com.icici.xpress_connect.common.api.encrypt(
+						keyStoreType, keyStoreName, keyStorePath, keyStorePassword, keyType, keyAliasName, keyPassword, 
+						chMessagePayload, cipherAlgo, cipherAlgoMode, cipherAlgoPadding, encryptionEncoding, paddingType, ivHex);
+
+			SET encryptionResult.encrypted_payload = encMessagePayload;
+			
+		ELSEIF keyGenPolicy = 'RUNTIME' THEN
+			-- We need to generate a key at runtime using the necessary ingredients.
+			DECLARE keySize 	INTEGER refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_ENCRYPTION_SECRET_KEYSIZE;
+			
+			IF COALESCE(keySize, '') = '' THEN
+				-- Use key size in accordance to the cipher algo.
+				SET encMessagePayload = encryptSelfGenKey(chMessagePayload, cipherAlgo, cipherAlgoMode, cipherAlgoPadding,
+					 encryptionEncoding, paddingType, ivHex, secretKeyHexOutput);
+			ELSE
+				SET encMessagePayload = encryptSelfGenKey2(chMessagePayload, cipherAlgo, cipherAlgoMode, cipherAlgoPadding,
+					 encryptionEncoding, paddingType, ivHex, keySize, secretKeyHexOutput);
+			END IF;
+
+			DECLARE keyStoreType 				CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_KEYSTORE_TYPE;
+			DECLARE keyStoreName 				CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_KEYSTORE_NAME;
+			DECLARE keyStorePath 					CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_KEYSTORE_PATH;
+			DECLARE keyStorePassword 		CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_KEYSTORE_PASSWORD;
+			
+			DECLARE keyType 							INTEGER			MESSAGE_SECURITY_CIPHER_PUBLIC_KEY;	-- Customer's  RSA PUBLIC key
+			
+			DECLARE keyAliasName 				CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_PUBLIC_KEY_ALIAS_NAME;
+			DECLARE keyPassword  				CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_PUBLIC_KEY_PASSWORD;
+
+			SET cipherAlgo 					= refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRETKEY_ENCRYPTION_ALGO;
+			SET cipherAlgoMode 			= refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRETKEY_ENCRYPTION_ALGO_MODE;
+			SET cipherAlgoPadding 	= refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRETKEY_ENCRYPTION_ALGO_PADDING ;
+			SET paddingType 				= refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRETKEY_ENCRYPTION_ALGO_CUSTOM_PADDING;
+			
+			DECLARE secretKeyEncoded CHARACTER encode(decode(secretKeyHexOutput, ENCRYPT_ENC_HEX), encryptionEncoding);
+			DECLARE encSecretKey 	CHARACTER 	com.icici.xpress_connect.common.api.encryptEncodedMessage(
+						keyStoreType, keyStoreName, keyStorePath, keyStorePassword, keyType, keyAliasName, keyPassword, 
+						secretKeyEncoded, cipherAlgo, cipherAlgoMode, cipherAlgoPadding, encryptionEncoding, paddingType, ivHex);
+
+			SET encryptionResult.encrypted_secret_key = encSecretKey;
+			SET encryptionResult.encrypted_payload = encMessagePayload;
+
+		END IF;
+		
+	END;
+
+
+	-- Convenience method to decrypt message payload.
+	CREATE FUNCTION decryptMessagePayload(IN  refSecureMessage REFERENCE, IN refMessageSecurityConfiguration REFERENCE)
+	RETURNS CHARACTER  
+	BEGIN
+
+		DECLARE ccsid 								INTEGER COALESCE(refMessageSecurityConfiguration.CodedCharSetId, 1208);
+		DECLARE encoding 						INTEGER COALESCE(refMessageSecurityConfiguration.Encoding, 546);
+
+		DECLARE keyType 						INTEGER			MESSAGE_SECURITY_CIPHER_SECRET_KEY;
+
+		DECLARE cipherAlgo 					CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_ENCRYPTION_ALGO;
+		DECLARE cipherAlgoMode 			CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_ENCRYPTION_ALGO_MODE;
+		DECLARE cipherAlgoPadding 	CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_ENCRYPTION_ALGO_PADDING;
+		
+		DECLARE encryptionEncoding 	CHARACTER 	COALESCE(refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_ENCRYPTION_ENCODING, 
+																													   ENCRYPT_ENC_BASE64);
+		DECLARE paddingType 				INTEGER 			0;
+
+		DECLARE keyGenPolicy 				CHARACTER refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_ENCRYPTION_SECRET_KEYGEN;
+
+		DECLARE chMessagePayload 		CHARACTER 	NULL;
+		DECLARE encMessagePayload 	CHARACTER 	refSecureMessage.encrypted_payload;
+		DECLARE ivHex 								CHARACTER 	encode(decode(refSecureMessage.encryption_iv, encryptionEncoding), 'hex');
+
+		IF  keyGenPolicy = 'STATIC' THEN
+			-- Keystore has AES / DES / 3DES SHARED SECRET key.
+
+			DECLARE keyStoreType 				CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRET_KEYSTORE_TYPE;
+			DECLARE keyStoreName 				CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRET_KEYSTORE_NAME;
+			DECLARE keyStorePath 				CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRET_KEYSTORE_PATH;
+			DECLARE keyStorePassword 		CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRET_KEYSTORE_PASSWORD;
+	
+			DECLARE keyAliasName 				CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRET_KEY_ALIAS_NAME;
+			DECLARE keyPassword  				CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRET_KEY_PASSWORD;
+
+			SET chMessagePayload = com.icici.xpress_connect.common.api.decrypt(
+						keyStoreType, keyStoreName, keyStorePath, keyStorePassword, keyType, keyAliasName, keyPassword, 
+						encMessagePayload, encryptionEncoding, cipherAlgo, cipherAlgoMode, cipherAlgoPadding, ivHex);
+
+			-- CREATE LASTCHILD OF refMessage PARSE(chMessagePayload CCSID ccsid ENCODING encoding OPTIONS FolderBitStream);
+			
+		ELSEIF keyGenPolicy = 'RUNTIME' THEN
+			-- We need to use the SECRET key generated at RUNTIME by the customer and SHARED with us in the message.
+			-- But first we need to decrypt the SHARED SECRET using the our PRIVATE KEY.
+
+				DECLARE keyStoreType 				CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_KEYSTORE_TYPE;
+				DECLARE keyStoreName 				CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_KEYSTORE_NAME;
+				DECLARE keyStorePath 				CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_KEYSTORE_PATH;
+				DECLARE keyStorePassword 		CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_KEYSTORE_PASSWORD;
+				DECLARE keyType 						INTEGER			MESSAGE_SECURITY_CIPHER_PRIVATE_KEY; 		-- our RSA Private Key.
+				DECLARE keyAliasName 				CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_PRIVATE_KEY_ALIAS_NAME;
+				DECLARE keyPassword  				CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_PRIVATE_KEY_PASSWORD;
+
+				DECLARE cipherAlgoSecretKey 					CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRETKEY_ENCRYPTION_ALGO;
+				DECLARE cipherAlgoModeSecretKey 		CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRETKEY_ENCRYPTION_ALGO_MODE;
+				DECLARE cipherAlgoPaddingSecretKey 	CHARACTER 	refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_SECRETKEY_ENCRYPTION_ALGO_PADDING;
+				
+				DECLARE paddingType 				INTEGER 			0;
+																			-- refMessageSecurityConfiguration.CLIENT_API_MESSAGE_SECURITY_ENCRYPTION_ALGO_CUSTOM_PADDING;
+
+				DECLARE secretKeyEncryptedInput			CHARACTER	refSecureMessage.encrypted_secret_key;
+				DECLARE secretKeyHex								CHARACTER	NULL;
+				
+				-- Decrypt SHARED SECRET key first.
+				SET secretKeyHex = encode(com.icici.xpress_connect.common.api.decryptRaw(
+							keyStoreType, keyStoreName, keyStorePath, keyStorePassword, keyType, keyAliasName, keyPassword, 
+							secretKeyEncryptedInput, encryptionEncoding, cipherAlgoSecretKey, cipherAlgoModeSecretKey, cipherAlgoPaddingSecretKey, NULL), ENCRYPT_ENC_HEX);
+
+				-- Now that we have the key, decrypt the payload using that key.
+				SET chMessagePayload = com.icici.xpress_connect.common.api.decryptWithKeyHex(
+							secretKeyHex, encMessagePayload, encryptionEncoding, cipherAlgo, cipherAlgoMode, cipherAlgoPadding, ivHex);
+	
+				-- CREATE LASTCHILD OF refMessage PARSE(chMessagePayload CCSID ccsid ENCODING encoding OPTIONS FolderBitStream);
+
+		END IF;
+		
+			RETURN chMessagePayload;
+
+	END;
+
+		
+-- ************************************************************************************************************************
+
+-- [04-Jul-2020]: Security: Support for message field hashing.
+CREATE FUNCTION hash(IN algo CHARACTER, IN data BLOB)  
+RETURNS CHARACTER 
+LANGUAGE JAVA  
+EXTERNAL NAME "com.icici.xpress_connect.common.utils.MessageSecurityHelper.hash";
+
+-- [04-Jul-2020]: Security: Support for message field hashing.
+CREATE FUNCTION hashUsingPBKDF2(IN data CHARACTER, IN salt BLOB, IN iterations INTEGER, IN keyLength INTEGER)  
+RETURNS CHARACTER
+LANGUAGE JAVA  
+EXTERNAL NAME "com.icici.xpress_connect.common.utils.MessageSecurityHelper.hashUsingPBKDF2";
+
+-- [03-Jul-2020]: Message security (Checksum / Hashing & Encryption)
+-- Used for XML Signature.
+CREATE FUNCTION canonicalizeXml(IN xml CHARACTER, IN algo CHARACTER, IN xpath CHARACTER, INOUT refNamespaces REFERENCE)  
+RETURNS CHARACTER 
+LANGUAGE JAVA  
+EXTERNAL NAME "com.icici.xpress_connect.common.utils.MessageSecurityHelper.canonicalizeXml";
+
+-- [03-Jul-2020]: Message security (Checksum / Hashing & Encryption)
+-- Used for XML Signature. Can be used to sign anything.
+CREATE FUNCTION sign(IN keyStoreType CHARACTER, 
+				IN keyStoreName CHARACTER, IN keyStorePath CHARACTER, 
+				IN keyStorePassword CHARACTER,
+				IN keyAliasName CHARACTER, IN keyPassword CHARACTER, 
+				IN signatureAlgo CHARACTER, 
+				IN message CHARACTER)  
+RETURNS CHARACTER 
+LANGUAGE JAVA  
+EXTERNAL NAME "com.icici.xpress_connect.common.utils.MessageSecurityHelper.sign";
+
+-- [03-Jul-2020]: Message security (Checksum / Hashing & Encryption)
+-- Used for XML Signature. Can be used to sign anything.
+CREATE FUNCTION sign_verify(IN keyStoreType CHARACTER, 
+				IN keyStoreName CHARACTER, IN keyStorePath CHARACTER, 
+				IN keyStorePassword CHARACTER,
+				IN keyAliasName CHARACTER, IN keyPassword CHARACTER, 
+				IN signatureAlgo CHARACTER, 
+				IN message CHARACTER, IN receivedSignature CHARACTER)  
+RETURNS BOOLEAN 
+LANGUAGE JAVA  
+EXTERNAL NAME "com.icici.xpress_connect.common.utils.MessageSecurityHelper.sign_verify";
+
+-- Valid values for parameter encoding: "hex" or "base64"
+CREATE FUNCTION encode(IN data BLOB, IN encoding CHARACTER)
+RETURNS CHARACTER 
+LANGUAGE JAVA
+EXTERNAL NAME "com.icici.xpress_connect.common.utils.MessageSecurityHelper.encode";
+
+-- Valid values for parameter encoding: "hex" or "base64"
+CREATE FUNCTION decode(IN data CHARACTER, IN encoding CHARACTER)
+RETURNS BLOB 
+LANGUAGE JAVA
+EXTERNAL NAME "com.icici.xpress_connect.common.utils.MessageSecurityHelper.decode";
+
+-- Initialization Vector (IV)
+CREATE FUNCTION iv(IN algo CHARACTER, IN noOfBytes INTEGER)
+RETURNS BLOB
+LANGUAGE JAVA
+EXTERNAL NAME "com.icici.xpress_connect.common.utils.MessageSecurityHelper.iv";
+
+-- Initialization Vector (IV)
+CREATE FUNCTION ivHexString(IN algo CHARACTER, IN noOfBytes INTEGER)
+RETURNS CHARACTER 
+LANGUAGE JAVA
+EXTERNAL NAME "com.icici.xpress_connect.common.utils.MessageSecurityHelper.ivHexString";
+
+CREATE FUNCTION 	getKeySize(IN algo CHARACTER)
+RETURNS INTEGER 
+LANGUAGE JAVA
+EXTERNAL NAME "com.icici.xpress_connect.common.utils.MessageSecurityHelper.getKeySize";
+
+CREATE FUNCTION 	getDefaultIVSize(IN cipherAlgo CHARACTER, IN cipherAlgoMode CHARACTER, IN cipherAlgoPadding CHARACTER)
+RETURNS INTEGER 
+LANGUAGE JAVA
+EXTERNAL NAME "com.icici.xpress_connect.common.utils.MessageSecurityHelper.getDefaultIVSize";
+
+
+-- [10-Jul-2020]: Security: Support for message field encryption.
+CREATE FUNCTION encrypt(IN keyStoreType CHARACTER, 
+				IN keyStoreName CHARACTER, IN keyStorePath CHARACTER, 
+				IN keyStorePassword CHARACTER,
+				IN keyType INTEGER, IN keyAliasName CHARACTER, IN keyPassword CHARACTER, 
+				IN message CHARACTER, 
+				IN cipherAlgo CHARACTER, IN cipherAlgoMode CHARACTER, IN cipherAlgoPadding CHARACTER,
+				IN encoding CHARACTER,  IN paddingType INTEGER, IN ivHex CHARACTER)  
+RETURNS CHARACTER 
+LANGUAGE JAVA
+EXTERNAL NAME "com.icici.xpress_connect.common.utils.MessageSecurityHelper.encrypt";
+
+CREATE FUNCTION encryptEncodedMessage(IN keyStoreType CHARACTER, 
+				IN keyStoreName CHARACTER, IN keyStorePath CHARACTER, 
+				IN keyStorePassword CHARACTER,
+				IN keyType INTEGER, IN keyAliasName CHARACTER, IN keyPassword CHARACTER, 
+				IN message CHARACTER, 
+				IN cipherAlgo CHARACTER, IN cipherAlgoMode CHARACTER, IN cipherAlgoPadding CHARACTER,
+				IN encoding CHARACTER,  IN paddingType INTEGER, IN ivHex CHARACTER)  
+RETURNS CHARACTER 
+LANGUAGE JAVA
+EXTERNAL NAME "com.icici.xpress_connect.common.utils.MessageSecurityHelper.encryptEncodedMessage";
+
+CREATE FUNCTION encryptSelfGenKey(
+				IN message CHARACTER, 
+				IN cipherAlgo CHARACTER, IN cipherAlgoMode CHARACTER, IN cipherAlgoPadding CHARACTER,
+				IN encoding CHARACTER,
+				IN paddingType INTEGER, IN ivHex CHARACTER, INOUT output CHARACTER)  
+RETURNS CHARACTER 
+LANGUAGE JAVA
+EXTERNAL NAME "com.icici.xpress_connect.common.utils.MessageSecurityHelper.encryptSelfGenKey";
+
+CREATE FUNCTION encryptSelfGenKey2(
+				IN message CHARACTER, 
+				IN cipherAlgo CHARACTER, IN cipherAlgoMode CHARACTER, IN cipherAlgoPadding CHARACTER,
+				IN encoding CHARACTER,
+				IN paddingType INTEGER, IN ivHex CHARACTER, IN keySize INTEGER, INOUT output CHARACTER)  
+RETURNS CHARACTER 
+LANGUAGE JAVA
+EXTERNAL NAME "com.icici.xpress_connect.common.utils.MessageSecurityHelper.encryptSelfGenKey2";
+
+CREATE FUNCTION decrypt(IN keyStoreType CHARACTER, 
+				IN keyStoreName CHARACTER, IN keyStorePath CHARACTER, 
+				IN keyStorePassword CHARACTER,
+				IN keyType INTEGER, 
+				IN keyAliasName CHARACTER, IN keyPassword CHARACTER, 
+				IN message CHARACTER, IN encoding CHARACTER,
+				IN cipherAlgo CHARACTER, IN cipherAlgoMode CHARACTER, IN cipherAlgoPadding CHARACTER,
+				IN ivHex CHARACTER)  
+RETURNS CHARACTER 
+LANGUAGE JAVA
+EXTERNAL NAME "com.icici.xpress_connect.common.utils.MessageSecurityHelper.decrypt";
+
+CREATE FUNCTION decryptRaw(IN keyStoreType CHARACTER, 
+				IN keyStoreName CHARACTER, IN keyStorePath CHARACTER, 
+				IN keyStorePassword CHARACTER,
+				IN keyType INTEGER, 
+				IN keyAliasName CHARACTER, IN keyPassword CHARACTER, 
+				IN message CHARACTER, IN encoding CHARACTER,
+				IN cipherAlgo CHARACTER, IN cipherAlgoMode CHARACTER, IN cipherAlgoPadding CHARACTER,
+				IN ivHex CHARACTER)  
+RETURNS BLOB
+LANGUAGE JAVA
+EXTERNAL NAME "com.icici.xpress_connect.common.utils.MessageSecurityHelper.decryptRaw";
+
+CREATE FUNCTION decryptWithKeyHex (IN keyHex CHARACTER, IN message CHARACTER, IN encoding CHARACTER,
+			IN cipherAlgo CHARACTER, IN cipherAlgoMode CHARACTER, IN cipherAlgoPadding CHARACTER,
+			IN ivHex CHARACTER)
+RETURNS CHARACTER 
+LANGUAGE JAVA
+EXTERNAL NAME "com.icici.xpress_connect.common.utils.MessageSecurityHelper.decryptWithKeyHex";
+
+--	CREATE FUNCTION decryptWithKey2 (IN key BLOB, IN message CHARACTER, IN encoding CHARACTER,
+--				IN cipherAlgo CHARACTER, IN cipherAlgoMode CHARACTER, IN cipherAlgoPadding CHARACTER,
+--				IN ivHex CHARACTER) 
+--	RETURNS CHARACTER 
+--	LANGUAGE JAVA
+--	EXTERNAL NAME "com.icici.xpress_connect.common.utils.MessageSecurityHelper.decryptWithKey2";
+
+CREATE FUNCTION getKeyStringify (IN keyStoreType CHARACTER, IN keyStoreName CHARACTER, 
+	IN keyStorePath CHARACTER, IN keyStorePassword CHARACTER, 
+	IN keyType INTEGER , IN keyAliasName CHARACTER, IN keyPassword CHARACTER, IN encoding CHARACTER)
+RETURNS CHARACTER 
+LANGUAGE JAVA
+EXTERNAL NAME "com.icici.xpress_connect.common.utils.MessageSecurityHelper.getKeyStringify";
+
+CREATE FUNCTION isAsymmetricEncryption (IN cipherAlgo CHARACTER)
+RETURNS BOOLEAN 
+BEGIN
+	IF (COALESCE(cipherAlgo, '') = '') THEN
+		RETURN FALSE;
+	END IF;
+	
+	IF (cipherAlgo = 'RSA' OR cipherAlgo = 'DSA' OR cipherAlgo = 'ECDSA') THEN
+		RETURN TRUE;
+	ELSE
+		RETURN FALSE;
+	END IF;	  
+END;
+
+CREATE FUNCTION canonicalizeXmlEntire(IN message CHARACTER, IN canonicalAlgo CHARACTER) 
+RETURNS CHARACTER
+LANGUAGE JAVA  
+EXTERNAL NAME "com.icici.xpress_connect.common.utils.MessageSecurityHelper.canonicalizeXmlEntire"; 
+
+-- ************************************************************************************************************************
+	

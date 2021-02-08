@@ -1,0 +1,27 @@
+BROKER SCHEMA com.icici.xpress_connect.common.api
+
+
+
+
+Create PROCEDURE createMQRFH2Header(IN refInputRoot REFERENCE,
+										  IN refOutputRoot REFERENCE, IN refEnv REFERENCE)
+BEGIN
+	--Check if an MQRFH2 header is already present in the OutputRoot
+	IF refOutputRoot.MQRFH2 IS NULL THEN
+		--Create the MQRFH2 header just before the message body
+	    CREATE NEXTSIBLING OF refOutputRoot.MQMD DOMAIN 'MQRFH2';
+	END IF;
+	
+
+	
+	--Set the MQRFH2 header fields
+	SET refOutputRoot.MQMD.Format 							= 'MQRFH2  ';
+	SET refOutputRoot.MQRFH2.(MQRFH2.Field)Version 			= 2;
+	SET refOutputRoot.MQRFH2.(MQRFH2.Field)Format 			= MQFMT_STRING;
+	SET refOutputRoot.MQRFH2.(MQRFH2.Field)Encoding 		= refInputRoot.MQMD.Encoding;
+	SET refOutputRoot.MQRFH2.(MQRFH2.Field)CodedCharSetId 	= refInputRoot.MQMD.CodedCharSetId;
+	SET refOutputRoot.MQRFH2.(MQRFH2.Field)Flags 			= 0;
+	SET refOutputRoot.MQRFH2.(MQRFH2.Field)NameValueCCSID 	= 1208;
+	SET refOutputRoot.MQRFH2.usr.retryCount					= CAST(COALESCE(refEnv.Variables.MQRFH2.usr.retryCount,0) AS INTEGER) + 1;
+	
+END;

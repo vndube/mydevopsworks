@@ -1,0 +1,144 @@
+BROKER SCHEMA com.icici.xpress_connect.common.api
+
+-- Header Fields for request redelivery mechanism.
+--	Retry Indicator Flag  (Type: Boolean)
+DECLARE 	IXC_REDELIVERY_INDICATOR									CONSTANT CHARACTER 'IXC-Redelivery-Indicator';
+--	Current Attempt Counter  (Type: Integer)
+DECLARE 	IXC_REDELIVERY_COUNTER_CURRENT  				CONSTANT CHARACTER 'IXC-Redelivery-Counter-Current';
+--	User Agent  (Type: String)*
+-- Example: eCollection/<Client-Code>/<Version ID> 
+DECLARE 	IXC_USER_AGENT 														CONSTANT CHARACTER 'IXC-User-Agent';
+--	Target Endpoint URL  (Type: String, Pattern: URL)*
+DECLARE 	IXC_REDELIVERY_ENDPOINT_URI							CONSTANT CHARACTER 'IXC-Redelivery-Endpoint-URI';
+--	Message Content-Type  (Type: Boolean)*
+-- Valid Values: application/json, application/xml, text/json, text/xml
+DECLARE 	IXC_REDELIVERY_MESSAGE_CONTENT_TYPE	CONSTANT CHARACTER 'IXC-Redelivery-Message-Content-Type';
+--	Redelivery Rule  (Type: String)
+DECLARE 	IXC_REDELIVERY_RULE_NAME								CONSTANT CHARACTER 'IXC-Redelivery-Rule-Name';
+--	Max Attempt Counter  (Type: Integer, -1: Infinite, 0: Do Not Reattempt, Positive Value: those many reattempts)*
+DECLARE 	IXC_REDELIVERY_COUNTER_MAXIMUM				CONSTANT CHARACTER 'IXC-Redelivery-Counter-Maximum';
+--	Min Delay Interval Between Two Attempts (Type: Integer, Value in seconds)
+DECLARE 	IXC_REDELIVERY_INTERVAL									CONSTANT CHARACTER 'IXC-Redelivery-Interval';
+--	Last Retry (Type: Timestamp, Pattern: ISO-8601)* 
+-- Example: 2020-01-24T23:59:30.000
+DECLARE 	IXC_REDELIVERY_NOT_BEYOND								CONSTANT CHARACTER 'IXC-Redelivery-Not-Beyond';
+
+--	Current Options:
+--	12 Hours: Request / Current Timestamp + 12 hours.
+--	Till 8 PM: Current Date + 20:00:00.000
+ --	At EOD: Current Date + 23:59:59.999
+
+--	DND Window Start (Type: String, Pattern: HH:mm:ss)*
+-- Example: 19:59:59
+DECLARE 	IXC_REDELIVERY_DND_AFTER_HOURS				CONSTANT CHARACTER 'IXC-Redelivery-DND-After-Hours';
+--	DND Window End (Type: String, Pattern: HH:mm:ss)*
+-- Example: 08:00:00
+DECLARE 	IXC_REDELIVERY_DND_UPTO_HOURS					CONSTANT CHARACTER 'IXC-Redelivery-DND-Upto-Hours';
+
+--	Final Retry At (Last Ditch Attempt) (Type: Timestamp, Pattern: ISO-8601)
+DECLARE 	IXC_REDELIVERY_FALLBACK_AT						CONSTANT CHARACTER 'IXC-Redelivery-Fallback-At';
+
+--	Fallback Redelivery Rule  (Type: String) [08-May-2020]
+DECLARE 	IXC_REDELIVERY_FALLBACK_RULE_NAME	CONSTANT CHARACTER 'IXC-Redelivery-Fallback-Rule-Name';
+
+-- [05-Feb-2020] 
+-- No redelivery.
+DECLARE API_REDELIVERY_NONE 			CONSTANT INTEGER 0;
+-- Redeliver till it succeeds.
+DECLARE API_REDELIVERY_FOREVER 			CONSTANT INTEGER -1;
+
+-- Adds the redelivery header fields
+CREATE FUNCTION injectMessageRedeliveryTransportHeaders(IN ApplicationName CHARACTER, IN MessageFlowLabel CHARACTER,
+				 IN refAPIRedeliveryHeaderValues REFERENCE, INOUT refAPIMessageHeader REFERENCE) 
+BEGIN
+	
+	-- End-to-end traceability.
+	-- refAPIMessageHeader will reference User (}usr} folder).
+	SET refAPIMessageHeader.{IXC_REDELIVERY_INDICATOR} 					= COALESCE(refAPIRedeliveryHeaderValues.RedeliveryIndicator, TRUE);
+	SET refAPIMessageHeader.{IXC_REDELIVERY_COUNTER_CURRENT} 	= CAST(refAPIRedeliveryHeaderValues.RedeliveryCounter AS  INTEGER);
+	SET refAPIMessageHeader.{IXC_USER_AGENT} 											= refAPIRedeliveryHeaderValues.UserAgent;
+	SET refAPIMessageHeader.{IXC_REDELIVERY_ENDPOINT_URI} 				= refAPIRedeliveryHeaderValues.RedeliveryEndpointURI;
+	SET refAPIMessageHeader.{IXC_REDELIVERY_MESSAGE_CONTENT_TYPE} 		
+																																		= refAPIRedeliveryHeaderValues.MessageContentType;
+	SET refAPIMessageHeader.{IXC_REDELIVERY_RULE_NAME} 					= refAPIRedeliveryHeaderValues.RedeliveryRuleName;
+	SET refAPIMessageHeader.{IXC_REDELIVERY_COUNTER_MAXIMUM}	= refAPIRedeliveryHeaderValues.MaximumRedeliveryAttemptCount;
+	SET refAPIMessageHeader.{IXC_REDELIVERY_INTERVAL} 						= refAPIRedeliveryHeaderValues.RedeliveryInterval;
+	SET refAPIMessageHeader.{IXC_REDELIVERY_NOT_BEYOND} 				= refAPIRedeliveryHeaderValues.MaximumRedeliverableTimestamp;
+	SET refAPIMessageHeader.{IXC_REDELIVERY_DND_AFTER_HOURS} 	= refAPIRedeliveryHeaderValues.RedeliveryBlockStartTime;
+	SET refAPIMessageHeader.{IXC_REDELIVERY_DND_UPTO_HOURS} 	= refAPIRedeliveryHeaderValues.RedeliveryBlockEndTime;
+	-- [08-May-2020]
+	SET refAPIMessageHeader.{IXC_REDELIVERY_FALLBACK_RULE_NAME} 
+																																		= refAPIRedeliveryHeaderValues.FallbackRedeliveryRuleName;
+-- SET refAPIMessageHeader.{IXC_REDELIVERY_FALLBACK_AT} 				= refAPIRedeliveryHeaderValues.FallbackRedeliveryTimestamp;
+	
+END;
+
+-- [05-Feb-2020] Convenience method to access redelivery headers.
+CREATE FUNCTION getCurrentRedeliveryCount(IN refAPIMessageHeader REFERENCE) RETURNS INTEGER
+BEGIN
+	RETURN CAST(COALESCE(refAPIMessageHeader.{IXC_REDELIVERY_COUNTER_CURRENT}, '0') AS INTEGER);
+END;
+
+CREATE FUNCTION getMaximumRedeliveryCounts(IN refAPIMessageHeader REFERENCE) RETURNS INTEGER
+BEGIN
+	RETURN CAST(refAPIMessageHeader.{IXC_REDELIVERY_COUNTER_MAXIMUM} AS INTEGER);
+END;
+
+CREATE FUNCTION exceedsMaximumRedeliveryCounts(IN refAPIMessageHeader REFERENCE) RETURNS BOOLEAN
+BEGIN
+	DECLARE intMaxRedeliveryCount INTEGER CAST(refAPIMessageHeader.{IXC_REDELIVERY_COUNTER_MAXIMUM} AS INTEGER);
+	DECLARE intCurrentRedeliveryCount INTEGER CAST(refAPIMessageHeader.{IXC_REDELIVERY_COUNTER_CURRENT} AS INTEGER);
+	
+	RETURN 	(NOT(intMaxRedeliveryCount = API_REDELIVERY_FOREVER)) OR
+			(intMaxRedeliveryCount = API_REDELIVERY_NONE) OR
+			(intCurrentRedeliveryCount >= intCurrentRedeliveryCount);
+END;
+
+-- Time limit established by "Redelivery Rule": retry-till-12H, retry-till-eod-8PM rules.
+-- and set in the IXC_REDELIVERY_NOT_BEYOND by the main flow before placing it in redelivery queue.
+CREATE FUNCTION exceedsMaximumRedeliverableTimeLimit(IN refAPIMessageHeader REFERENCE) RETURNS BOOLEAN
+BEGIN
+	RETURN NOT(CAST(refAPIMessageHeader.{IXC_REDELIVERY_NOT_BEYOND} - CURRENT_TIMESTAMP AS INTERVAL SECOND) > 0);
+END;
+
+-- Time limit established by "Last Attempt Rule": retry-at-eond
+CREATE FUNCTION exceedsFallbackRedeliverableTimeLimit(IN refAPIMessageHeader REFERENCE) RETURNS BOOLEAN
+BEGIN
+	RETURN NOT(CAST(refAPIMessageHeader.{IXC_REDELIVERY_FALLBACK_AT} - CURRENT_TIMESTAMP AS INTERVAL SECOND) > 0);
+END;
+
+-- Time limit established by "Last Attempt Rule": retry-at-eond
+CREATE FUNCTION isDefaultRedeliveryCondition(IN refAPIMessageHeader REFERENCE) RETURNS BOOLEAN
+BEGIN
+	RETURN (COALESCE(refAPIMessageHeader.{IXC_REDELIVERY_RULE_NAME}, '') = '');
+END;
+
+-- [20-Jun-2020]: Redelivered message check.
+CREATE FUNCTION isRedeliveredMessage(IN refAPIMessageHeader REFERENCE) RETURNS BOOLEAN
+BEGIN
+	RETURN getCurrentRedeliveryCount(refAPIMessageHeader) > 0;
+END;
+
+
+CREATE COMPUTE MODULE CommonAPIRedeliverySupport
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		-- CALL CopyMessageHeaders();
+		-- CALL CopyEntireMessage();
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+END MODULE;

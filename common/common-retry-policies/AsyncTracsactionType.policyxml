@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<policies>
+  <policy policyType="UserDefined" policyName="AsyncTracsactionType" policyTemplate="UserDefined">
+    <MaximumNumberOfRetries>3</MaximumNumberOfRetries>
+    <RetryInterval1>480</RetryInterval1>
+    <RetryInterval2>540</RetryInterval2>
+    <RetryInterval3>540</RetryInterval3>
+  </policy>
+</policies>

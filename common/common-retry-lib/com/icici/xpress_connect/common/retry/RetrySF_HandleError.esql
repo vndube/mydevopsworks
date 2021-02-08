@@ -1,0 +1,90 @@
+BROKER SCHEMA com.icici.xpress_connect.common.retry
+PATH com.icici.xpress_connect.common.api;
+
+DECLARE COOLING_OF_Q 			EXTERNAL CHARACTER '';
+DECLARE COOLING_OF_QM 			EXTERNAL CHARACTER '';
+DECLARE RETRY_Q 				EXTERNAL CHARACTER '';
+DECLARE RETRY_QM 				EXTERNAL CHARACTER '';
+DECLARE RETRY_POLICY_NAME		EXTERNAL CHARACTER '';
+
+DECLARE HEALTH_CHECK_ENDPOINT_URI 		EXTERNAL CHARACTER '';
+DECLARE PING_PACKET 					EXTERNAL CHARACTER '';
+DECLARE PING_INTERVAL 					EXTERNAL CHARACTER '';
+DECLARE CB_POLICY_NAME 					EXTERNAL CHARACTER '';
+DECLARE SUCCESS_HTTP_CODES  			EXTERNAL CHARACTER '';
+DECLARE API_CALLBACK_URI 				EXTERNAL CHARACTER '';
+DECLARE CLIENT_CODE		 				EXTERNAL CHARACTER '';
+DECLARE SEND_CB_PACKET					EXTERNAL BOOLEAN TRUE ;
+
+CREATE COMPUTE MODULE RetrySF_HandleError
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		
+	
+	IF SEND_CB_PACKET THEN
+		--Creating packet for CIRCUIT BREAKER
+		DECLARE refOut REFERENCE TO OutputRoot;
+		CREATE LASTCHILD OF OutputRoot AS refOut DOMAIN('JSON');
+		CREATE LASTCHILD OF refOut AS refOut NAME 'Data';
+		SET refOut.endpoint_uri 							= InputLocalEnvironment.WrittenDestination.HTTP.RequestURL;
+		SET refOut.health_indicator 						= FALSE;
+		SET refOut.health_check_endpoint_uri				= HEALTH_CHECK_ENDPOINT_URI;
+		SET refOut.ping_packet								= PING_PACKET;
+		SET refOut.ping_interval							= PING_INTERVAL;
+		SET refOut.circuit_breaker_policy					= CB_POLICY_NAME;
+		
+		--TODO CHECK WITH GAUTAM
+		SET refOut.api_controller_callback_endpoint_uri		= API_CALLBACK_URI;   
+		SET refOut.client_code								= CLIENT_CODE;
+		
+		CREATE LASTCHILD OF refOut AS refOut IDENTITY (JSON.Object)resposiveness_policy;
+		CREATE LASTCHILD OF refOut AS refOut IDENTITY (JSON.Array)http_status_codes;
+		
+		--TODO: SPLIT CODE
+		SET refOut.Item[1] = SUCCESS_HTTP_CODES;
+		
+		PROPAGATE TO TERMINAL 'out1' DELETE NONE;
+		
+		SET OutputRoot.JSON = NULL;
+	END IF;	
+		SET OutputRoot.JSON =  Environment.Variables.InputMsg.JSON;
+		
+		--SETTING PARAMS FOR RETRY
+		DECLARE refEnvMQRFH2 REFERENCE TO Environment.Variables.MQRFH2;
+		DECLARE intMaxRetries INTEGER CAST(getPolicyProperty(COALESCE(Environment.Variables.RetryPolicyName,RETRY_POLICY_NAME), 'MaximumNumberOfRetries') AS INTEGER); 
+
+		DECLARE retryCount INTEGER COALESCE(refEnvMQRFH2.usr.retryCount,0);
+		
+		--EXIT IF RETRY COUNT IS EXECCEDED.
+		IF retryCount >= intMaxRetries THEN
+			PROPAGATE TO TERMINAL 'out2';
+			RETURN FALSE;
+		END IF;
+		
+		--GET RETRY INTERVAL BASED ON NUMBER OF RETRY
+		DECLARE retryVarName CHARACTER 'RetryInterval' || CAST((retryCount+1) AS CHARACTER);
+		DECLARE expiry INTEGER CAST(getPolicyProperty(COALESCE(Environment.Variables.RetryPolicyName,RETRY_POLICY_NAME), retryVarName) AS INTEGER);
+		
+		--Setting property for MQ Header.
+		SET Environment.Variables.Retry.Expiry 			= expiry;
+		SET Environment.Variables.Retry.RetryQ 			= RETRY_Q;
+		SET Environment.Variables.Retry.RetryQM 		= RETRY_QM;
+		
+		
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+END MODULE;

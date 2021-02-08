@@ -1,0 +1,1844 @@
+BROKER SCHEMA com.icici.xpress_connect.common.api
+
+DECLARE CONTENT_TYPE_MIME_JSON 					CONSTANT CHARACTER 'application/json';
+DECLARE CONTENT_TYPE_MIME_XML 					CONSTANT CHARACTER 'application/xml';
+DECLARE CONTENT_TYPE_MIME_SOAP_1_1 			CONSTANT CHARACTER 'text/xml';
+DECLARE CONTENT_TYPE_MIME_SOAP_1_2 			CONSTANT CHARACTER 'application/soap+xml';
+DECLARE CONTENT_TYPE_MIME_PLAIN_TEXT 	CONSTANT CHARACTER 'text/plain';
+
+DECLARE DEFAULT_API_VERSION CONSTANT CHARACTER '1.2.0';
+
+-- 0: Successful completion
+-- 1: Warning (partial completion)
+-- 2: Error (complete failure)
+
+DECLARE API_COMPLETION_CODE_SUCCESSFUL 	CONSTANT INTEGER 0;
+DECLARE API_COMPLETION_CODE_WARNING 		CONSTANT INTEGER 1;
+DECLARE API_COMPLETION_CODE_ERROR 				CONSTANT INTEGER 2;
+
+-- Reason Code List.
+DECLARE API_REASON_CODE_UNKNOWN 			CONSTANT CHARACTER 'XC00201I';
+DECLARE API_REASON_MESSAGE_UNKNOWN 	CONSTANT CHARACTER 'No description found for the reason code.';
+
+-- [16-Jun-2020] Open ended messages.
+DECLARE API_REASON_CODE_OPEN_ERROR 						CONSTANT CHARACTER 'XC00999E';
+DECLARE API_REASON_MESSAGE_OPEN_ERROR 				CONSTANT CHARACTER '';
+DECLARE API_REASON_CODE_OPEN_WARNING 				CONSTANT CHARACTER 'XC00998W';
+DECLARE API_REASON_MESSAGE_OPEN_WARNING 		CONSTANT CHARACTER '';
+DECLARE API_REASON_CODE_OPEN_INFO 							CONSTANT CHARACTER 'XC00997I';
+DECLARE API_REASON_MESSAGE_OPEN_INFO 					CONSTANT CHARACTER '';
+
+DECLARE API_REASON_CODE_OK 							CONSTANT CHARACTER 'XC00202I';
+
+-- Reason Message List.
+DECLARE API_REASON_MESSAGE_OK 					CONSTANT CHARACTER 'OK.';
+DECLARE API_REASON_MESSAGE_DEFAULT 		CONSTANT CHARACTER 'No description found for the reason code.';
+
+-- Common across both request (source to ACE) and response (target / client to ACE) messages.
+DECLARE API_REASON_CODE_UNSUPPORTED_API_VERSION CONSTANT CHARACTER 'XC00001E';
+
+-- Request (sender to ACE) messages.
+DECLARE API_REASON_CODE_REQUEST_ID_NOT_FOUND CONSTANT CHARACTER 'XC00002E';
+DECLARE API_REASON_CODE_REQUEST_DATETIME_NOT_FOUND_NOT_VALID CONSTANT CHARACTER 'XC00003E';
+DECLARE API_REASON_CODE_PRIORITY_CODE_NOT_VALID CONSTANT CHARACTER 'XC00004E';
+DECLARE API_REASON_CODE_RESENT_INDICATOR_INCONSISTENT CONSTANT CHARACTER 'XC00005E';
+
+-- [10-Jan-2020]: Forbidden.
+DECLARE API_REASON_CODE_REQUEST_FORBIDDEN CONSTANT CHARACTER 'XC00011E';
+DECLARE API_REASON_CODE_REQUEST_REMOTE_FORBIDDEN CONSTANT CHARACTER 'XC00012E';
+
+-- Response (ACE to sender).
+DECLARE API_REASON_CODE_REQUEST_NOT_VALID CONSTANT CHARACTER 'XC00101E';
+DECLARE API_REASON_CODE_RESPONSE_NOT_VALID CONSTANT CHARACTER 'XC00102E';
+DECLARE API_REASON_CODE_RESPONSE_NOT_PARSEABLE  CONSTANT CHARACTER 'XC00103E';
+
+DECLARE API_REASON_CODE_API_VERSION_MISMATCH CONSTANT CHARACTER 'XC00031E';
+DECLARE API_REASON_CODE_REQUEST_ID_MISMATCH CONSTANT CHARACTER 'XC00032E';
+DECLARE API_REASON_CODE_REQUEST_DATETIME_MISMATCH CONSTANT CHARACTER 'XC00033E';
+DECLARE API_REASON_CODE_PRIORITY_CODE_MISMATCH CONSTANT CHARACTER 'XC00034E';
+DECLARE API_REASON_CODE_RESENT_INDICATOR_MISMATCH CONSTANT CHARACTER 'XC00035E';
+
+-- Communication errors.
+DECLARE API_REASON_CODE_COMMUNICATION_ERROR CONSTANT CHARACTER 'XC00091E';
+DECLARE API_REASON_CODE_CLIENT_SERVICE_TIMEOUT_ERROR CONSTANT CHARACTER 'XC00092E';
+DECLARE API_REASON_CODE_CLIENT_SERVICE_UNAVAILABLE_ERROR CONSTANT CHARACTER 'XC00093E';
+DECLARE API_REASON_CODE_CLIENT_SERVICE_BAD_GATEWAY_ERROR CONSTANT CHARACTER 'XC00094E'; -- [20-Jan-2020]
+
+
+DECLARE API_REASON_CODE_REQUEST_ACCEPTED CONSTANT CHARACTER 'XC00211I';
+DECLARE API_REASON_CODE_REQUEST_PROVISIONALLY_ACCEPTED CONSTANT CHARACTER 'XC00212I';
+DECLARE API_REASON_CODE_OBJECT_CREATED CONSTANT CHARACTER 'XC00213I';
+DECLARE API_REASON_CODE_REQUEST_REJECTED  CONSTANT CHARACTER 'XC00221E';
+DECLARE API_REASON_CODE_REQUEST_PROVISIONALLY_REJECTED CONSTANT CHARACTER 'XC00222I';		-- [20-Jan-2020] : Reserved. Unused.
+
+-- Reason codes to be used whatever be the logic on the Client API end.
+-- These codes decide the Accept (Fund Transfer) / Reject (Refund) Payment Instruction logic.
+DECLARE API_REASON_MESSAGE_REQUEST_ACCEPTED CONSTANT CHARACTER 'Request accepted.';
+DECLARE API_REASON_MESSAGE_REQUEST_PROVISIONALLY_ACCEPTED CONSTANT CHARACTER 'Request provisionally accepted.';			-- [20-Jan-2020]
+DECLARE API_REASON_MESSAGE_OBJECT_CREATED CONSTANT CHARACTER 'Resource created.';
+DECLARE API_REASON_MESSAGE_REQUEST_REJECTED  CONSTANT CHARACTER 'Request rejected.';				-- [20-Jan-2020]
+
+-- [20-Jan-2020]
+DECLARE API_REASON_CODE_UNEXPECTED_FAILURE CONSTANT CHARACTER 'XC00500E';
+DECLARE API_REASON_MESSAGE_UNEXPECTED_FAILURE CONSTANT CHARACTER 'Experienced an unexpected internal service failure.';
+
+DECLARE API_REASON_CODE_UNEXPECTED_INTERMITTENT_FAILURE CONSTANT CHARACTER 'XC00501W';
+DECLARE API_REASON_MESSAGE_UNEXPECTED_INTERMITTENT_FAILURE CONSTANT CHARACTER 'Experiencing unexpected and intermittent service failures. One or more request were not processed.';
+
+-- [06-Feb-2020]
+DECLARE API_REASON_CODE_SERVICE_TIMEOUT_ERROR  CONSTANT CHARACTER 'XC00502E';
+DECLARE API_REASON_MESSAGE_SERVICE_TIMEOUT_ERROR  CONSTANT CHARACTER 'Experienced an unexpected service timeout. Possible causes could be network latency or delayed client response.';
+
+-- [05-Sep-2020]
+DECLARE API_REASON_CODE_RESPONSE_INCONSISTENT CONSTANT CHARACTER 'XC00503E';
+DECLARE API_REASON_MESSAGE_RESPONSE_INCONSISTENT CONSTANT CHARACTER 'Transformation errors noticed in the response possibly due to uninformed client API changes or mapping errors. One or more required fields not found.';
+
+-- Field level reason messages.
+-- Common across both request (source to ACE) and response (target / client to ACE) messages.
+DECLARE API_REASON_MESSAGE_UNSUPPORTED_API_VERSION CONSTANT CHARACTER 'Unsupported API version.';
+
+-- Request (source to ACE) messages.
+DECLARE API_REASON_MESSAGE_REQUEST_ID_NOT_FOUND CONSTANT CHARACTER 'Request ID not found in the request message.';
+DECLARE API_REASON_MESSAGE_REQUEST_DATETIME_NOT_FOUND_NOT_VALID CONSTANT CHARACTER 'Request Date Time not found in the request message or is not a valid ISO 8601 format.';
+DECLARE API_REASON_MESSAGE_PRIORITY_CODE_NOT_VALID CONSTANT CHARACTER 'Invalid priority code.';
+DECLARE API_REASON_MESSAGE_RESENT_INDICATOR_INCONSISTENT CONSTANT CHARACTER 'Required fields pertaining to a resent message, not found.';
+ 
+ 	-- [10-Jan-2020]: Forbidden.
+DECLARE API_REASON_MESSAGE_REQUEST_FORBIDDEN CONSTANT CHARACTER 'Client / Business (Customer) has not subscribed for this service.';
+DECLARE API_REASON_MESSAGE_REQUEST_REMOTE_FORBIDDEN CONSTANT CHARACTER 'Client / Business (Customer) service refused servicing this request.';
+ 
+-- Response (target / client to ACE).
+DECLARE API_REASON_MESSAGE_RESPONSE_ID_NOT_FOUND CONSTANT CHARACTER 'Response ID not found in the response message received from the client.';
+DECLARE API_REASON_MESSAGE_RESPONSE_DATETIME_NOT_FOUND CONSTANT CHARACTER 'Response Date Time not found in the response message received from the client.';
+
+DECLARE API_REASON_MESSAGE_API_VERSION_MISMATCH CONSTANT CHARACTER 'API version in the request does not match with the one in the response message received from the client.';
+DECLARE API_REASON_MESSAGE_REQUEST_ID_MISMATCH CONSTANT CHARACTER 'Request ID  in the request does not match with the one in the response message received from the client.';
+DECLARE API_REASON_MESSAGE_REQUEST_DATETIME_MISMATCH CONSTANT CHARACTER 'Request Date Time in the request does not match with the one in the response message received from the client.';
+DECLARE API_REASON_MESSAGE_PRIORITY_CODE_MISMATCH CONSTANT CHARACTER 'Priority Code in the request does not match with the one in the response message received from the client.';
+DECLARE API_REASON_MESSAGE_RESENT_INDICATOR_MISMATCH CONSTANT CHARACTER 'Resent Indicator in the request does not match with the one in the response message received from the client.';
+
+-- Generic reason messages.
+DECLARE API_REASON_MESSAGE_REQUEST_NOT_VALID CONSTANT CHARACTER 'Invalid request. One or more required fields not found or had values that were not valid.';
+DECLARE API_REASON_MESSAGE_RESPONSE_NOT_VALID CONSTANT CHARACTER 'Invalid response from client. One or more required fields not found.';
+DECLARE API_REASON_MESSAGE_RESPONSE_NOT_PARSEABLE CONSTANT CHARACTER 'Invalid response from client. Response could not be parsed.';
+
+-- Communication errors.
+DECLARE API_REASON_MESSAGE_COMMUNICATION_ERROR CONSTANT CHARACTER 'Communication error. Unable to connect to the client service.';
+DECLARE API_REASON_MESSAGE_CLIENT_SERVICE_TIMEOUT_ERROR CONSTANT CHARACTER 'Communication error. Client Service did not respond within the stipulated response period.';
+DECLARE API_REASON_MESSAGE_CLIENT_SERVICE_UNAVAILABLE_ERROR CONSTANT CHARACTER 'Communication error. Client Service unavailable.';
+ -- [20-Jan-2020]
+DECLARE API_REASON_MESSAGE_CLIENT_SERVICE_BAD_GATEWAY_ERROR CONSTANT CHARACTER 'Communication error. Client Service experienced internal issues or issues connecting to other systems.'; 
+
+-- [10-Jan-2020]  Business reason codes. Use when OPTIMIZE_FOR_UNIFIED_API = TRUE.
+
+-- [20-Jan-2020] Transaction Accepted and Transaction Rejected codes are consulted in PreparePaymentInstruction ESQL module.
+-- These two reason codes in conjunction with the configuration will decide if payment instruction will be issued.
+DECLARE API_REASON_CODE_TRANSACTION_ACCEPTED CONSTANT CHARACTER 'XC00441I';									-- [20-Jan-2020]
+DECLARE API_REASON_MESSAGE_TRANSACTION_ACCEPTED CONSTANT CHARACTER 'Transaction accepted.';		-- [20-Jan-2020]
+
+DECLARE API_REASON_CODE_TRANSACTION_REJECTED CONSTANT CHARACTER 'XC00442E';									-- [20-Jan-2020]
+DECLARE API_REASON_MESSAGE_TRANSACTION_REJECTED CONSTANT CHARACTER 'Transaction rejected.';			-- [20-Jan-2020]
+
+----------
+
+
+DECLARE API_REASON_CODE_INVALID_CLIENT_CODE CONSTANT CHARACTER 'XC00401E';
+DECLARE API_REASON_MESSAGE_INVALID_CLIENT_CODE CONSTANT CHARACTER 'Client Code is not valid.';
+
+DECLARE API_REASON_CODE_INVALID_VIRTUAL_ACCOUNT_NUMBER CONSTANT CHARACTER 'XC00402E';
+DECLARE API_REASON_MESSAGE_INVALID_VIRTUAL_ACCOUNT_NUMBER CONSTANT CHARACTER 'Virtual Account Number is not valid.';
+
+DECLARE API_REASON_CODE_CLIENT_CODE_VIRTUAL_ACCOUNT_NUMBER_MISMATCH CONSTANT CHARACTER 'XC00403E';
+DECLARE API_REASON_MESSAGE_CLIENT_CODE_VIRTUAL_ACCOUNT_NUMBER_MISMATCH CONSTANT CHARACTER 'Client Code & Virtual Account Number do not match.';
+
+DECLARE API_REASON_CODE_DUPLICATE_TRANSACTION_ID CONSTANT CHARACTER 'XC00404E';
+DECLARE API_REASON_MESSAGE_DUPLICATE_TRANSACTION_ID CONSTANT CHARACTER 'Dedup check failed. Transaction ID duplicated.';
+
+DECLARE API_REASON_CODE_MISMATCH_CLIENT_ACCOUNT_NUMBER CONSTANT CHARACTER 'XC00405E';
+DECLARE API_REASON_MESSAGE_MISMATCH_CLIENT_ACCOUNT_NUMBER CONSTANT CHARACTER 'Client (Beneficary) account is invalid or does not match the Client Account Name.';
+
+DECLARE API_REASON_CODE_INVALID_SENDER_IFSC_CODE CONSTANT CHARACTER 'XC00406E';
+DECLARE API_REASON_MESSAGE_INVALID_SENDER_IFSC_CODE CONSTANT CHARACTER 'Sender Bank''s IFSC code is not valid.';
+
+DECLARE API_REASON_CODE_INVALID_CLIENT_IFSC_CODE CONSTANT CHARACTER 'XC00407E';
+DECLARE API_REASON_MESSAGE_INVALID_CLIENT_IFSC_CODE CONSTANT CHARACTER 'Client (Beneficiary) Bank''s IFSC code is not valid.';
+
+-- [15-Jan-2020]: 
+DECLARE API_REASON_CODE_CLIENT_CODE_NOT_FOUND CONSTANT CHARACTER 'XC00408E'; 
+DECLARE API_REASON_MESSAGE_CLIENT_CODE_NOT_FOUND CONSTANT CHARACTER 'Client code not found.';
+
+DECLARE API_REASON_CODE_PAYMENT_MODE_NOT_FOUND CONSTANT CHARACTER 'XC00409E';
+DECLARE API_REASON_MESSAGE_PAYMENT_MODE_NOT_FOUND CONSTANT CHARACTER 'Payment method not found.';
+
+DECLARE API_REASON_CODE_PAYMENT_MODE_NOT_VALID CONSTANT CHARACTER 'XC00410E';
+DECLARE API_REASON_MESSAGE_PAYMENT_MODE_NOT_VALID CONSTANT CHARACTER 'Payment method is not valid.';
+
+-- [12-Feb-2020]
+DECLARE API_REASON_CODE_PAYMENT_MODE_TRANSACTION_ID_TYPE_MISMATCH 			CONSTANT CHARACTER 	'XC00411E';
+DECLARE API_REASON_MESSAGE_PAYMENT_MODE_TRANSACTION_ID_TYPE_MISMATCH 	CONSTANT CHARACTER 	'Payment mode and Transaction ID type conflict.';
+
+DECLARE API_REASON_CODE_CURRENCY_NOT_ACCEPTED CONSTANT CHARACTER 'XC00412E';
+DECLARE API_REASON_MESSAGE_CURRENCY_NOT_ACCEPTED CONSTANT CHARACTER 'Payment transactions not accepted for the currency.';
+
+-- [16-Jun-2020]: Security / Authentication / Authorization
+DECLARE API_REASON_CODE_SECURITY_EXCEPTION 											CONSTANT CHARACTER 'XC00601E';
+DECLARE API_REASON_MESSAGE_SECURITY_EXCEPTION 									CONSTANT CHARACTER 'Security Exception. User is not authorized to access this service.';
+DECLARE API_REASON_CODE_REMOTE_SECURITY_EXCEPTION 						CONSTANT CHARACTER 'XC00602E';
+DECLARE API_REASON_MESSAGE_REMOTE_SECURITY_EXCEPTION 				CONSTANT CHARACTER 'Security Exception. Client / Business (Customer) service refused servicing this request.';
+
+-- [04-Aug-2020]: Message Security: Checksum / Hashing & Encryption
+DECLARE API_REASON_CODE_SECURITY_EXCEPTION_INTEGRITY							CONSTANT CHARACTER 'XC00603E';
+DECLARE API_REASON_MESSAGE_SECURITY_EXCEPTION_INTEGRITY					CONSTANT CHARACTER 'Security Exception. Message integrity violation.';
+DECLARE API_REASON_CODE_SECURITY_EXCEPTION_CONFIDENTIALLY 			CONSTANT CHARACTER 'XC00604E';
+DECLARE API_REASON_MESSAGE_SECURITY_EXCEPTION_CONFIDENTIALLY 	CONSTANT CHARACTER 'Security Exception. Message confidentiality violation.';
+DECLARE API_REASON_CODE_SECURITY_EXCEPTION_CONFIGRITY						CONSTANT CHARACTER 'XC00605E';
+DECLARE API_REASON_MESSAGE_SECURITY_EXCEPTION_CONFIGRITY				CONSTANT CHARACTER 'Security Exception. Message integrity / confidentiality violation.';
+
+-- [10-Jan-2020]: Refund / Reversal related codes.
+
+DECLARE API_REASON_CODE_REMITTER_ACCOUNT_NUMBER_NOT_FOUND CONSTANT CHARACTER 'XC00431E';
+DECLARE API_REASON_CODE_REVERSAL_STATUS_NOT_FOUND CONSTANT CHARACTER 'XC00432E';
+DECLARE API_REASON_CODE_REVERSAL_STATUS_CODE_NOT_VALID CONSTANT CHARACTER 'XC00433E';
+DECLARE API_REASON_CODE_REFUND_CODE_NOT_FOUND CONSTANT CHARACTER 'XC00434E';
+DECLARE API_REASON_CODE_REJECTION_REASON_NOT_PROVIDED CONSTANT CHARACTER 'XC00435W';
+DECLARE API_REASON_CODE_REVERSAL_STATUS_INCONSISTENT CONSTANT CHARACTER 'XC00436E';
+
+-- [18-Jan-2020]: Refund / Reversal related messages.
+DECLARE API_REASON_MESSAGE_REMITTER_ACCOUNT_NUMBER_NOT_FOUND CONSTANT CHARACTER 'Remitter Account Number not found.';
+DECLARE API_REASON_MESSAGE_REVERSAL_STATUS_NOT_FOUND CONSTANT CHARACTER 'Refund status not found.';
+DECLARE API_REASON_MESSAGE_REVERSAL_STATUS_CODE_NOT_VALID CONSTANT CHARACTER 'Refund status is invalid.';
+DECLARE API_REASON_MESSAGE_REFUND_CODE_NOT_FOUND CONSTANT CHARACTER 'Refund code not found.';
+DECLARE API_REASON_MESSAGE_REJECTION_REASON_NOT_PROVIDED CONSTANT CHARACTER 'Refund rejection reason not found.';
+DECLARE API_REASON_MESSAGE_REVERSAL_STATUS_INCONSISTENT CONSTANT CHARACTER 'Refund rejection reason not found.';
+
+-- [12-Feb-2020]:  
+DECLARE API_REFUND_PAYMENT_STATUS_PAID 					CONSTANT CHARACTER 'P';
+DECLARE API_REFUND_PAYMENT_STATUS_CANCELLED 	CONSTANT CHARACTER 'C';
+
+-- Add new currency codes constants here.
+DECLARE API_ISO4217_CURRENCY_CODE_INR 							CONSTANT CHARACTER 'INR';
+
+DECLARE API_TRANSACTION_ID_TYPE_UTR  							CONSTANT CHARACTER 'UTR';
+DECLARE API_TRANSACTION_ID_TYPE_RRN  							CONSTANT CHARACTER 'RRN';
+DECLARE API_TRANSACTION_ID_TYPE_TRANID  					CONSTANT CHARACTER 'TRANID';
+
+-- [22-Feb-2020]:
+DECLARE API_REASON_CODE_CLIENT_END_BAD_REQUEST 			CONSTANT CHARACTER 'XC00104E';
+DECLARE API_REASON_MESSAGE_CLIENT_END_BAD_REQUEST 	CONSTANT CHARACTER 'Invalid request caused a parsing failure at client end. Probably an API transformation error.';
+
+-- [08-Jan-2020]:
+DECLARE API_REASON_CODE_UNABLE_TO_FORWARD_CLIENT_GATEWAY CONSTANT CHARACTER 'XCG0400E';
+DECLARE API_REASON_MESSAGE_UNABLE_TO_FORWARD_CLIENT_GATEWAY CONSTANT CHARACTER 'Invalid request. Unable to forward the request to the client API bridge service.';
+
+-- HTTP Status Codes.
+-- OK
+DECLARE API_HTTP_STATUS_CODE_OK CONSTANT INTEGER 200;
+-- Created
+DECLARE API_HTTP_STATUS_CODE_CREATED CONSTANT INTEGER 201;
+-- Accepted
+DECLARE API_HTTP_STATUS_CODE_ACCEPTED CONSTANT INTEGER 202;
+-- Conflict
+DECLARE API_HTTP_STATUS_CODE_CONFLICT  CONSTANT INTEGER 409;
+
+-- Not Modified
+DECLARE API_HTTP_STATUS_CODE_NOT_MODIFIED CONSTANT INTEGER 304;
+--Bad Request	
+DECLARE API_HTTP_STATUS_CODE_BAD_REQUEST CONSTANT INTEGER 400;
+-- Unauthorized
+DECLARE API_HTTP_STATUS_CODE_UNAUTHORIZED CONSTANT INTEGER 401;
+-- [10-Jan-2020]: Forbidden
+DECLARE API_HTTP_STATUS_CODE_FORBIDDEN CONSTANT INTEGER 403;
+-- Page Not Found
+DECLARE API_HTTP_STATUS_CODE_PAGE_NOT_FOUND CONSTANT INTEGER 404;
+-- Request Timeout
+DECLARE API_HTTP_STATUS_CODE_REQUEST_TIMEOUT CONSTANT INTEGER 408;
+--Unprocessable Entity	
+DECLARE API_HTTP_STATUS_CODE_UNPROCESSABLE_ENTITY CONSTANT INTEGER 422;
+-- Internal Server Error
+DECLARE API_HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR CONSTANT INTEGER 500;
+-- Bad Gateway	
+DECLARE API_HTTP_STATUS_CODE_BAD_GATEWAY CONSTANT INTEGER 502;
+-- Service Unavailable
+DECLARE API_HTTP_STATUS_CODE_SERVICE_UNAVAILABLE CONSTANT INTEGER 503;
+-- Gateway Timeout
+DECLARE API_HTTP_STATUS_CODE_GATEWAY_TIMEOUT CONSTANT INTEGER 504;
+-- Multi-Status
+DECLARE API_HTTP_STATUS_CODE_MULTI_STATUS CONSTANT INTEGER 207;
+-- Used for plugging in Reason Code to HTTP Status Code where reason codes are customer defined (extended).
+DECLARE API_HTTP_STATUS_CODE_UNKNOWN CONSTANT INTEGER -1;
+
+-- Default are required to ensure that an invalid request is returned back after correcting it.
+-- Example: If the request did not carry the request ID, we will use stub the response with a request ID having a dummy value.
+-- This will ensure that the response returned by our API is a valid one.
+ 
+DECLARE API_DUMMY_VALUE_API_VERSION CONSTANT CHARACTER '0.0.0';
+DECLARE API_DUMMY_VALUE_API_REQUEST_ID CONSTANT CHARACTER '00000000-0000-0000-0000-000000000000';
+DECLARE API_DUMMY_VALUE_API_REQUEST_DATETIME CONSTANT CHARACTER '1970-01-01T00:00:00.000+00:00'; 	-- Unix Epoc.
+DECLARE API_DUMMY_VALUE_API_ORIGINAL_REQUEST_ID CONSTANT CHARACTER '00000000-0000-0000-0000-000000000000';
+DECLARE API_DUMMY_VALUE_API_ORIGINAL_REQUEST_DATETIME CONSTANT CHARACTER '1970-01-01T00:00:00.000+00:00'; 	-- Unix Epoc.
+
+
+-- [06-Feb-2020]: Payment Mode specific endpoint routing.
+DECLARE API_PAYMENT_MODE_NEFT   		CONSTANT	CHARACTER 		'NEFT';
+DECLARE API_PAYMENT_MODE_RTGS   		CONSTANT	CHARACTER 		'RTGS';
+DECLARE API_PAYMENT_MODE_FT   			CONSTANT	CHARACTER 		'FT';
+DECLARE API_PAYMENT_MODE_IMPS   		CONSTANT	CHARACTER 		'IMPS';
+DECLARE API_PAYMENT_MODE_UPI	   		CONSTANT 	CHARACTER 		'UPI';
+
+-- [07-Feb-2020]: API Priority Constants.
+DECLARE API_REQUEST_PRIORITY_HIGHEST 	CONSTANT 	INTEGER 	1;
+DECLARE API_REQUEST_PRIORITY_LOWEST 		CONSTANT 	INTEGER 	5;
+DECLARE API_REQUEST_PRIORITY_DEFAULT 	CONSTANT 	INTEGER 	3;
+
+DECLARE ERROR_CODE_JSON_PARSING_ERROR 							CONSTANT		INTEGER 		5705;
+--Errors have occurred during parsing of XML.
+DECLARE ERROR_CODE_XML_PARSING_ERROR 							CONSTANT		INTEGER 		5009;	-- [20-May-2020]
+
+-- JSON writing errors have occurred.
+DECLARE ERROR_CODE_JSON_WRITING_ERROR 							CONSTANT		INTEGER 		5706;	-- [20-May-2020]
+-- XML Writing Errors have occurred.
+DECLARE ERROR_CODE_XML_WRITING_ERROR 							CONSTANT		INTEGER 		5010;	-- [20-May-2020]
+
+-- SOAP tree cannot be serialized
+DECLARE ERROR_CODE_SOAP_WRITING_ERROR 						CONSTANT		INTEGER 		3605;	-- [22-May-2020]
+
+DECLARE ERROR_CODE_CONVERSION_ERROR_INTEGER 		CONSTANT		INTEGER 		2595;
+DECLARE ERROR_CODE_CONVERSION_ERROR_BOOLEAN 		CONSTANT		INTEGER 		2455;
+-- An error occurred whilst performing a socket operation.
+DECLARE ERROR_CODE_SOCKET_CONNECTION_3150				CONSTANT		INTEGER 		3150;
+DECLARE ERROR_CODE_SOCKET_CONNECTION_3151				CONSTANT		INTEGER 		3151;
+-- A Web Service request has detected a SOCKET error whilst invoking a web service located at host &1, on port &2, on path &3.
+DECLARE ERROR_CODE_SOCKET_CONNECTION_3152				CONSTANT		INTEGER 		3152;
+DECLARE ERROR_CODE_API_REQUEST_ERROR 							CONSTANT		INTEGER 		3162;	-- Web Service Request Exception [20-May-2020]
+
+-- Common helper functions for validating API messages and building response messages.
+CREATE COMPUTE MODULE CommonAPIMessageBuilder
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		RETURN TRUE;
+	END;
+END MODULE;
+
+-- Map / Build API request header (transport level).
+-- CREATE FUNCTION defaultMapAPIRequestHeader(IN refAPIRequest REFERENCE, INOUT refClientAPIRequest REFERENCE)
+-- BEGIN
+-- -- TODO: Reserved for future use.
+-- END;
+
+-- Map / Build API request body (data / payload).
+CREATE FUNCTION defaultMapAPIRequest(IN refAPIRequest REFERENCE, INOUT refClientAPIRequest REFERENCE)
+BEGIN
+	-- TODO: Reserved for future use.
+END;
+
+-- Map / Build API response header (transport level).
+-- CREATE FUNCTION defaultMapAPIResponseHeader(IN refClientAPIResponse REFERENCE, INOUT refAPIResponse REFERENCE)
+-- BEGIN
+	-- TODO: Reserved for future use.
+-- END;
+
+-- Map / Build API response body (data / payload).
+CREATE FUNCTION defaultMapAPIResponse(IN refClientAPIResponse REFERENCE, INOUT refAPIResponse REFERENCE)
+BEGIN
+	-- TODO: Reserved for future use.
+END;
+
+-- Attaches new assertion information ("Assertion" child element) to the given tree reference.
+CREATE FUNCTION recordAPIMessageAssertion(INOUT refAssertions REFERENCE,  
+										IN chAssertionName CHARACTER, IN chReasonCode CHARACTER) 
+BEGIN
+		CREATE LASTCHILD OF refAssertions NAME 'Assertion';
+		
+		DECLARE refLastAssertion REFERENCE TO refAssertions.Assertion[<];
+
+		SET refLastAssertion.assertion_name =  chAssertionName;
+		SET refLastAssertion.reason_code = chReasonCode;
+		SET refLastAssertion.message = lookupReasonMessage(refLastAssertion.reason_code);
+END;
+
+-- Attaches new assertion information ("Assertion" child element) to the given tree reference.
+CREATE FUNCTION recordAPIExtendedMessageAssertion(INOUT refAssertions REFERENCE,  
+										IN chAssertionName CHARACTER, IN chReasonCode CHARACTER) 
+BEGIN
+		CREATE LASTCHILD OF refAssertions NAME 'Assertion';
+		
+		DECLARE refLastAssertion REFERENCE TO refAssertions.Assertion[<];
+
+		SET refLastAssertion.assertion_name =  chAssertionName;
+		SET refLastAssertion.reason_code = chReasonCode;
+		SET refLastAssertion.message = lookupExtendedReasonMessage(refLastAssertion.reason_code);
+END;
+
+-- Validates the common (non business data) fields in the request message.
+CREATE FUNCTION performBaseAPIRequestValidation(IN refAPIRequest REFERENCE,
+INOUT refAPIValidationReport REFERENCE)
+BEGIN
+	DECLARE flgAPIResponseValid BOOLEAN TRUE;
+
+	-- Apply common validations.
+	IF NOT (assertAPIVersion(refAPIRequest)) THEN
+		CALL recordAPIMessageAssertion(refAPIValidationReport,  'API-Version', API_REASON_CODE_UNSUPPORTED_API_VERSION);
+		SET flgAPIResponseValid = FALSE;
+	END IF;
+
+	IF NOT (assertRequestId(refAPIRequest)) THEN
+		CALL recordAPIMessageAssertion(refAPIValidationReport,  'Request-ID', API_REASON_CODE_REQUEST_ID_NOT_FOUND);
+		SET flgAPIResponseValid = FALSE;
+	END IF;
+
+	IF NOT (assertRequestDateTime(refAPIRequest)) THEN
+		CALL recordAPIMessageAssertion(refAPIValidationReport,  'Request-DateTime', API_REASON_CODE_REQUEST_DATETIME_NOT_FOUND_NOT_VALID);
+		SET flgAPIResponseValid = FALSE;
+	END IF;
+	
+	IF NOT (assertPriority(refAPIRequest)) THEN
+		CALL recordAPIMessageAssertion(refAPIValidationReport,  'Request-Priority', API_REASON_CODE_PRIORITY_CODE_NOT_VALID);
+		SET flgAPIResponseValid = FALSE;
+	END IF;
+
+	IF NOT (assertResentIndicator(refAPIRequest)) THEN
+		CALL recordAPIMessageAssertion(refAPIValidationReport,  'Resent-Indicator', API_REASON_CODE_RESENT_INDICATOR_INCONSISTENT);
+		SET flgAPIResponseValid = FALSE;
+	END IF;
+	
+	-- End of validations.
+
+	CREATE FIRSTCHILD OF refAPIValidationReport NAME 'completion_code';
+
+	IF flgAPIResponseValid THEN
+		-- Completion Code: Successful.
+		SET refAPIValidationReport.completion_code = API_COMPLETION_CODE_SUCCESSFUL;
+	ELSE
+		-- Completion Code: Error.
+		SET refAPIValidationReport.completion_code = API_COMPLETION_CODE_ERROR;
+	END IF;
+
+END;
+
+-- Common business data field validations for request. 
+-- Reserved for future usage.
+CREATE FUNCTION performDefaultRequestBusinessDataValidation(IN refAPIRequest REFERENCE,
+INOUT refAPIValidationReport REFERENCE)
+BEGIN
+	DECLARE flgAPIResponseValid BOOLEAN TRUE;
+
+	-- Base / Common Validation.
+
+	IF NOT (assertClientCode(refAPIRequest)) THEN
+		CALL recordAPIExtendedMessageAssertion(refAPIValidationReport,  'Client-Code', 
+					API_REASON_CODE_CLIENT_CODE_NOT_FOUND);
+		SET flgAPIResponseValid = FALSE;
+	END IF;
+	
+	IF NOT (assertPaymentMode(refAPIRequest)) THEN
+		CALL recordAPIExtendedMessageAssertion(refAPIValidationReport,  'Payment-Mode', 
+					API_REASON_CODE_PAYMENT_MODE_NOT_FOUND);
+		SET flgAPIResponseValid = FALSE;
+	END IF;
+	
+	-- [12-Feb-2020]: Enabled payment mode validation.
+	IF NOT (assertPaymentModeValidity(refAPIRequest)) THEN
+		CALL recordAPIExtendedMessageAssertion(refAPIValidationReport,  'Payment-Mode-Validity', 
+					API_REASON_CODE_PAYMENT_MODE_NOT_VALID);
+		SET flgAPIResponseValid = FALSE;
+	END IF;
+
+	-- [12-Feb-2020]: Enabled payment mode - transaction ID validation.
+	IF NOT (assertPaymentModeTransactionIDTypeMatch(refAPIRequest)) THEN
+		CALL recordAPIExtendedMessageAssertion(refAPIValidationReport,  'Payment-Mode-Transaction-ID-Type', 
+					API_REASON_CODE_PAYMENT_MODE_TRANSACTION_ID_TYPE_MISMATCH);
+		SET flgAPIResponseValid = FALSE;
+	END IF;
+
+	-- [12-Feb-2020]: Currency Code validation.
+	IF NOT (assertAcceptableCurrency(refAPIRequest)) THEN
+		CALL recordAPIExtendedMessageAssertion(refAPIValidationReport,  'Payment-Mode-Validity', 
+					API_REASON_CODE_CURRENCY_NOT_ACCEPTED);
+		SET flgAPIResponseValid = FALSE;
+	END IF;
+
+	-- End of validations.
+
+	-- [12-Feb-2020]: Added.
+	CREATE FIRSTCHILD OF refAPIValidationReport NAME 'completion_code';
+
+	IF flgAPIResponseValid THEN
+		-- Completion Code: Successful.
+		SET refAPIValidationReport.completion_code = API_COMPLETION_CODE_SUCCESSFUL;
+	ELSE
+		-- Completion Code: Error.
+		SET refAPIValidationReport.completion_code = API_COMPLETION_CODE_ERROR;
+	END IF;
+
+END;
+
+-- [15-Jan-2020]: Client Code presence check to return back a Client Code not provided business error 
+-- if the field value is not provided in the request. This would return a Bad Request HTTP 400 instead 
+-- of the less conspicuous 403 Forbidden error.
+-- Field assertion: Client Code presence.
+CREATE FUNCTION assertClientCode(IN refAPIRequest REFERENCE) RETURNS BOOLEAN
+BEGIN
+	IF TRIM(COALESCE(refAPIRequest.client_code, '')) = '' THEN
+		RETURN FALSE;
+	ELSE
+		RETURN TRUE;
+	END IF;
+END;
+
+-- [15-Jan-2020]: Payment Mode presence.
+CREATE FUNCTION assertPaymentMode(IN refAPIRequest REFERENCE) RETURNS BOOLEAN
+BEGIN
+	IF TRIM(COALESCE(refAPIRequest.payment_mode, '')) = '' THEN
+		RETURN FALSE;
+	ELSE
+		RETURN TRUE;
+	END IF;
+END;
+
+-- [15-Jan-2020]: Payment Mode validity.
+CREATE FUNCTION assertPaymentModeValidity(IN refAPIRequest REFERENCE) 
+RETURNS BOOLEAN
+BEGIN
+	DECLARE chPaymentMode CHARACTER COALESCE(refAPIRequest.payment_mode, '');
+	IF chPaymentMode = API_PAYMENT_MODE_NEFT 	OR
+		 chPaymentMode = API_PAYMENT_MODE_RTGS 	OR
+		 chPaymentMode = API_PAYMENT_MODE_IMPS 	OR
+		 chPaymentMode = API_PAYMENT_MODE_FT 	OR
+		 chPaymentMode = API_PAYMENT_MODE_UPI 	
+		 									THEN
+		 RETURN TRUE;
+	END IF;
+	RETURN FALSE;	 
+END;
+
+-- [12-Feb-2020]: Payment Mode to Transaction ID Type match for consistency.
+--		Payment Mode 	Transaction ID Type
+--			NEFT 								UTR
+--			RTGS 								UTR
+--			IMPS 								RRN
+--			FT 								TRANID
+CREATE FUNCTION assertPaymentModeTransactionIDTypeMatch (IN refAPIRequest REFERENCE) 
+RETURNS BOOLEAN
+BEGIN
+	DECLARE chPaymentMode 				CHARACTER COALESCE(refAPIRequest.payment_mode, '');
+	DECLARE transactionIdTypeCode 	CHARACTER COALESCE(refAPIRequest.transaction_id_type, '');
+
+	IF chPaymentMode = API_PAYMENT_MODE_NEFT  AND 
+		transactionIdTypeCode = API_TRANSACTION_ID_TYPE_UTR THEN
+		RETURN TRUE;
+	END IF;
+	IF chPaymentMode = API_PAYMENT_MODE_RTGS  AND 
+		transactionIdTypeCode = API_TRANSACTION_ID_TYPE_UTR THEN
+		RETURN TRUE;
+	END IF;
+	IF chPaymentMode = API_PAYMENT_MODE_IMPS  AND 
+		transactionIdTypeCode = API_TRANSACTION_ID_TYPE_RRN THEN
+		RETURN TRUE;
+	END IF;
+	IF chPaymentMode = API_PAYMENT_MODE_FT  AND 
+		transactionIdTypeCode = API_TRANSACTION_ID_TYPE_TRANID THEN
+		RETURN TRUE;
+	END IF;
+	IF chPaymentMode = API_PAYMENT_MODE_UPI  AND 
+		transactionIdTypeCode = API_TRANSACTION_ID_TYPE_RRN THEN
+		RETURN TRUE;
+	END IF;
+	RETURN FALSE;
+END;
+
+-- [12-Feb-2020]: Only INR is considered as an acceptable currency at this point in time.
+CREATE FUNCTION assertAcceptableCurrency(IN refAPIRequest REFERENCE) RETURNS BOOLEAN
+BEGIN
+	IF refAPIRequest.currency_code = API_ISO4217_CURRENCY_CODE_INR THEN
+		RETURN TRUE;
+	END IF;	
+	RETURN FALSE;
+END;
+
+-- Field assertion: API Version presence and compatibility.
+CREATE FUNCTION assertAPIVersion(IN refAPIRequest REFERENCE) RETURNS BOOLEAN
+BEGIN
+	IF TRIM(COALESCE(refAPIRequest.api_version, '')) = '' THEN
+		RETURN FALSE;
+	ELSE
+		-- TODO: Incorporate semantic version logic.
+		-- Example: If the application supports 1.0, it should support versions 1.X, 1.X.X as well.
+	END IF;
+END;
+
+-- Field assertion: Request ID presence.
+CREATE FUNCTION assertRequestId(IN refAPIRequest REFERENCE) RETURNS BOOLEAN
+BEGIN
+	RETURN TRIM(COALESCE(refAPIRequest.request_id, '')) <> '';
+END;
+
+-- Field assertion: Request Timestamp presence and format.
+CREATE FUNCTION assertRequestDateTime(IN refAPIRequest REFERENCE) RETURNS BOOLEAN
+BEGIN
+	IF TRIM(COALESCE(refAPIRequest.request_datetime, '')) = '' THEN
+		RETURN FALSE;
+	ELSE
+		DECLARE CONTINUE HANDLER FOR SQLSTATE LIKE '%'
+		BEGIN
+			RETURN FALSE;
+		END;
+		--  Validate ISO datetime format.
+		DECLARE request_datetime  TIMESTAMP CAST (refAPIRequest.request_datetime AS TIMESTAMP FORMAT 'IU');
+		RETURN TRUE;
+	END IF;
+END;
+
+-- Field assertion: Original Request Timestamp presence and format. Used in context to a resent request (resent_indicator = true).
+CREATE FUNCTION assertOriginalRequestDateTime(IN refAPIRequest REFERENCE) RETURNS BOOLEAN
+BEGIN
+	IF TRIM(COALESCE(refAPIRequest.original_request_datetime, '')) = '' THEN
+		RETURN FALSE;
+	ELSE
+		DECLARE CONTINUE HANDLER FOR SQLSTATE LIKE '%'
+		BEGIN
+			RETURN FALSE;
+		END;
+		--  Validate ISO datetime format.
+		DECLARE original_request_datetime  TIMESTAMP CAST (refAPIRequest.original_request_datetime AS TIMESTAMP FORMAT 'IU');
+		RETURN TRUE;
+	END IF;
+END;
+
+-- Field assertion: If present, the value of Priority field should be one of the canned values. [1: Highest to 5: Lowest, 3: Default]
+CREATE FUNCTION assertPriority(IN refAPIRequest REFERENCE) RETURNS BOOLEAN
+BEGIN
+	DECLARE enumPriority INTEGER CAST(COALESCE(refAPIRequest.refAPIRequest.priority, '3') AS INTEGER);
+
+	IF enumPriority >= API_REQUEST_PRIORITY_HIGHEST AND enumPriority <= API_REQUEST_PRIORITY_LOWEST THEN
+		RETURN TRUE;
+	ELSE
+		RETURN FALSE;
+	END IF;
+END;
+
+-- Field assertion: If the sender has marked the request as a resent one, we check for the presence of the 
+-- original request ID, original request timestamp field in the request message. Also if the request is 
+-- not a resent one, then a negative check if run on the absence of any of the "original_*" fields in the 
+-- request, presence of which indicates inconsitency and hence an error.
+CREATE FUNCTION assertResentIndicator(IN refAPIRequest REFERENCE) RETURNS BOOLEAN
+BEGIN
+	DECLARE flgResentIndicator BOOLEAN CAST(COALESCE(refAPIRequest.resent_indicator, 'FALSE') AS BOOLEAN);
+
+	IF flgResentIndicator THEN
+		IF ( TRIM(COALESCE(refAPIRequest.original_request_id, '')) = '' OR
+			TRIM(COALESCE(refAPIRequest.original_request_datetime, '')) = '' ) THEN
+			RETURN FALSE;
+		END IF;
+		RETURN TRUE;
+	ELSE
+		IF( TRIM(COALESCE(refAPIRequest.original_request_id, '')) <> '' OR
+		TRIM(COALESCE(refAPIRequest.original_request_datetime, '')) <> '' OR
+		TRIM(COALESCE(refAPIRequest.original_sender_system_id, '')) <> '' OR
+		TRIM(COALESCE(refAPIRequest.original_sender_user_id, '')) <> '' OR
+		TRIM(COALESCE(refAPIRequest.original_sender_user_id_type, '')) <> '' OR
+		TRIM(COALESCE(refAPIRequest.original_request_priority, '')) <> '') THEN
+		RETURN FALSE;
+	END IF;
+	RETURN TRUE;
+END IF;
+END;
+
+
+-- Field assertion: Response ID presence.
+CREATE FUNCTION assertResponseId(IN refAPIResponse REFERENCE) RETURNS BOOLEAN
+BEGIN
+	RETURN TRIM(COALESCE(refAPIResponse.response_id, '')) <> '';
+END;
+
+-- Field assertion: Response timestamp presence.
+CREATE FUNCTION assertResponseDateTime(IN refAPIResponse REFERENCE) RETURNS BOOLEAN
+BEGIN
+	IF TRIM(COALESCE(refAPIResponse.response_datetime, '')) = '' THEN
+		RETURN FALSE;
+	ELSE
+		DECLARE CONTINUE HANDLER FOR SQLSTATE LIKE '%'
+		BEGIN
+			RETURN FALSE;
+		END;
+		-- Validate ISO datetime format.
+		DECLARE response_datetime  TIMESTAMP CAST (refAPIResponse.response_datetime AS TIMESTAMP FORMAT 'IU');
+		RETURN TRUE;
+	END IF;
+END;
+
+
+-- [12-Feb-2020]: Refund Intimation Checks.
+CREATE FUNCTION assertRefundPaymentStatus(IN refAPIRequest REFERENCE) RETURNS BOOLEAN
+BEGIN
+	RETURN COALESCE(refAPIRequest.refund_payment_status, '') <> '';
+END;
+CREATE FUNCTION assertRefundPaymentStatusValidity(IN refAPIRequest REFERENCE) RETURNS BOOLEAN
+BEGIN
+	IF refAPIRequest.refund_payment_status = API_REFUND_PAYMENT_STATUS_PAID THEN
+		RETURN TRUE;
+	END IF;
+	IF refAPIRequest.refund_payment_status = API_REFUND_PAYMENT_STATUS_CANCELLED THEN
+		RETURN TRUE;
+	END IF;
+	
+	RETURN FALSE;
+END;
+
+CREATE FUNCTION assertRefundOrRejectionCodes(IN refAPIRequest REFERENCE) RETURNS BOOLEAN
+BEGIN
+	IF refAPIRequest.refund_payment_status = API_REFUND_PAYMENT_STATUS_PAID THEN
+		RETURN COALESCE(refAPIRequest.refund_code, '') <> '';
+	END IF;
+	IF refAPIRequest.refund_payment_status = API_REFUND_PAYMENT_STATUS_CANCELLED THEN
+		RETURN COALESCE(refAPIRequest.refund_rejection_code, '') <> '';
+	END IF;
+	
+	RETURN FALSE;
+END;
+
+-- Common business data field validations for request. 
+-- Reserved for future usage.
+-- [12-Feb-2020]
+CREATE FUNCTION performDefaultRefundRequestBusinessDataValidation(IN refAPIRequest REFERENCE,
+INOUT refAPIValidationReport REFERENCE)
+BEGIN
+	DECLARE flgAPIResponseValid BOOLEAN TRUE;
+
+	-- Base / Common Validation common for intimation and refund.
+	CALL performDefaultRequestBusinessDataValidation(refAPIRequest, refAPIValidationReport);
+
+	-- Validation for Refund.
+	IF NOT (assertRefundPaymentStatus(refAPIRequest)) THEN
+		CALL recordAPIExtendedMessageAssertion(refAPIValidationReport,  'Refund-Code', API_REASON_CODE_REVERSAL_STATUS_NOT_FOUND);
+		SET flgAPIResponseValid = FALSE;
+	END IF;
+
+	IF NOT (assertRefundPaymentStatusValidity(refAPIRequest)) THEN
+		CALL recordAPIExtendedMessageAssertion(refAPIValidationReport,  'Refund-Code-Validity', API_REASON_CODE_REVERSAL_STATUS_CODE_NOT_VALID);
+		SET flgAPIResponseValid = FALSE;
+	END IF;
+
+-- [12-Feb-2020]: Need confirmation on this from ICICI.	
+--	IF NOT (assertRefundOrRejectionCodes(refAPIRequest)) THEN
+--		CALL recordAPIExtendedMessageAssertion(refAPIValidationReport,  'Refund-Code-Inconsistency', API_REASON_CODE_REJECTION_REASON_NOT_PROVIDED);
+--		SET flgAPIResponseValid = FALSE;
+--	END IF;
+	
+	-- End of validations.
+
+	-- [12-Feb-2020]: Added.
+	IF refAPIValidationReport.completion_code = API_COMPLETION_CODE_ERROR THEN
+		RETURN;
+	END IF;
+		
+	IF flgAPIResponseValid THEN
+		-- Completion Code: Successful.
+		SET refAPIValidationReport.completion_code = API_COMPLETION_CODE_SUCCESSFUL;
+	ELSE
+		-- Completion Code: Error.
+		SET refAPIValidationReport.completion_code = API_COMPLETION_CODE_ERROR;
+	END IF;
+END;
+
+
+
+--  Returns a descriptive message for the given code.
+CREATE FUNCTION lookupReasonMessage (IN reasonCode CHARACTER) RETURNS CHARACTER
+BEGIN
+	IF reasonCode = API_REASON_CODE_UNSUPPORTED_API_VERSION THEN
+		RETURN API_REASON_MESSAGE_UNSUPPORTED_API_VERSION;
+	END IF;
+	IF reasonCode = API_REASON_CODE_REQUEST_ID_NOT_FOUND THEN
+		RETURN API_REASON_MESSAGE_REQUEST_ID_NOT_FOUND;
+	END IF;
+	IF reasonCode = API_REASON_CODE_REQUEST_DATETIME_NOT_FOUND_NOT_VALID THEN
+		RETURN API_REASON_MESSAGE_REQUEST_DATETIME_NOT_FOUND_NOT_VALID;
+	END IF;
+	IF reasonCode = API_REASON_CODE_PRIORITY_CODE_NOT_VALID THEN
+		RETURN API_REASON_MESSAGE_PRIORITY_CODE_NOT_VALID;
+	END IF;
+	IF reasonCode = API_REASON_CODE_RESENT_INDICATOR_INCONSISTENT THEN
+		RETURN API_REASON_MESSAGE_RESENT_INDICATOR_INCONSISTENT;
+	END IF;
+	IF reasonCode = API_REASON_CODE_REQUEST_NOT_VALID THEN
+		RETURN API_REASON_MESSAGE_REQUEST_NOT_VALID;
+	END IF;
+	-- [22-Feb-2020]
+	IF reasonCode = API_REASON_CODE_CLIENT_END_BAD_REQUEST THEN
+		RETURN API_REASON_MESSAGE_CLIENT_END_BAD_REQUEST;
+	END IF;
+	IF reasonCode = API_REASON_CODE_RESPONSE_NOT_VALID THEN
+		RETURN API_REASON_MESSAGE_RESPONSE_NOT_VALID;
+	END IF;	
+	IF reasonCode = API_REASON_CODE_RESPONSE_NOT_PARSEABLE  THEN
+		RETURN API_REASON_MESSAGE_RESPONSE_NOT_PARSEABLE;
+	END IF;	
+	IF reasonCode = API_REASON_CODE_API_VERSION_MISMATCH THEN 
+		RETURN API_REASON_MESSAGE_API_VERSION_MISMATCH;
+	END IF;
+	IF reasonCode = API_REASON_CODE_REQUEST_ID_MISMATCH THEN 
+		RETURN API_REASON_MESSAGE_REQUEST_ID_MISMATCH;
+	END IF;
+	IF reasonCode = API_REASON_CODE_REQUEST_DATETIME_MISMATCH THEN 
+		RETURN API_REASON_MESSAGE_REQUEST_DATETIME_MISMATCH;
+	END IF;
+	IF reasonCode = API_REASON_CODE_PRIORITY_CODE_MISMATCH THEN 
+		RETURN API_REASON_MESSAGE_PRIORITY_CODE_MISMATCH;
+	END IF;
+	IF reasonCode = API_REASON_CODE_RESENT_INDICATOR_MISMATCH THEN 
+		RETURN API_REASON_MESSAGE_RESENT_INDICATOR_MISMATCH;
+	END IF;	
+
+	-- [10-Jan-2020]: Forbidden.
+	IF reasonCode = API_REASON_CODE_REQUEST_FORBIDDEN THEN
+		RETURN API_REASON_MESSAGE_REQUEST_FORBIDDEN;
+	END IF;
+	IF reasonCode = API_REASON_CODE_REQUEST_REMOTE_FORBIDDEN THEN
+		RETURN API_REASON_MESSAGE_REQUEST_REMOTE_FORBIDDEN;
+	END IF;
+
+	-- [16-Jun-2020]: Security / Authentication / Authorization
+	IF reasonCode = API_REASON_CODE_SECURITY_EXCEPTION THEN
+		RETURN API_REASON_MESSAGE_SECURITY_EXCEPTION;
+	END IF;
+	IF reasonCode = API_REASON_CODE_REMOTE_SECURITY_EXCEPTION THEN
+		RETURN API_REASON_MESSAGE_REMOTE_SECURITY_EXCEPTION;
+	END IF;
+
+	-- [04-Aug-2020]: Message Security: Checksum / Hashing & Encryption
+	IF reasonCode = API_REASON_CODE_SECURITY_EXCEPTION_INTEGRITY THEN
+		RETURN API_REASON_MESSAGE_SECURITY_EXCEPTION_INTEGRITY;
+	END IF;
+	IF reasonCode = API_REASON_CODE_SECURITY_EXCEPTION_CONFIDENTIALLY THEN
+		RETURN API_REASON_MESSAGE_SECURITY_EXCEPTION_CONFIDENTIALLY;
+	END IF;
+	IF reasonCode = API_REASON_CODE_SECURITY_EXCEPTION_CONFIGRITY THEN
+		RETURN API_REASON_MESSAGE_SECURITY_EXCEPTION_CONFIGRITY;
+	END IF;
+
+	-- Communication errors.
+	IF reasonCode = API_REASON_CODE_COMMUNICATION_ERROR THEN
+		RETURN API_REASON_MESSAGE_COMMUNICATION_ERROR;
+	END IF;
+	IF reasonCode = API_REASON_CODE_CLIENT_SERVICE_TIMEOUT_ERROR THEN
+		RETURN API_REASON_MESSAGE_CLIENT_SERVICE_TIMEOUT_ERROR;
+	END IF;
+	IF reasonCode = API_REASON_CODE_CLIENT_SERVICE_UNAVAILABLE_ERROR THEN
+		RETURN API_REASON_MESSAGE_CLIENT_SERVICE_UNAVAILABLE_ERROR;
+	END IF;
+	IF reasonCode = API_REASON_CODE_CLIENT_SERVICE_BAD_GATEWAY_ERROR THEN
+		RETURN API_REASON_MESSAGE_CLIENT_SERVICE_BAD_GATEWAY_ERROR;
+	END IF;
+	
+	IF reasonCode = API_REASON_CODE_REQUEST_ACCEPTED THEN
+		RETURN API_REASON_MESSAGE_REQUEST_ACCEPTED;
+	END IF;
+
+	IF reasonCode = API_REASON_CODE_REQUEST_PROVISIONALLY_ACCEPTED THEN		--[20-Jan-2020]
+		RETURN API_REASON_MESSAGE_REQUEST_PROVISIONALLY_ACCEPTED;
+	END IF;
+	IF reasonCode = API_REASON_CODE_REQUEST_REJECTED THEN		--[20-Jan-2020]
+		RETURN API_REASON_MESSAGE_REQUEST_REJECTED;
+	END IF;
+
+	IF reasonCode = API_REASON_CODE_OBJECT_CREATED THEN
+		RETURN API_REASON_MESSAGE_OBJECT_CREATED;
+	END IF;
+
+	-- [20-Jan-2020]	
+	IF reasonCode = API_REASON_CODE_UNEXPECTED_FAILURE THEN
+		RETURN API_REASON_MESSAGE_UNEXPECTED_FAILURE;
+	END IF;
+	IF reasonCode = API_REASON_CODE_UNEXPECTED_INTERMITTENT_FAILURE THEN
+		RETURN API_REASON_MESSAGE_UNEXPECTED_INTERMITTENT_FAILURE;
+	END IF;
+	-- [05-Sep-2020]
+	IF reasonCode = API_REASON_CODE_RESPONSE_INCONSISTENT THEN
+		RETURN API_REASON_MESSAGE_RESPONSE_INCONSISTENT;
+	END IF;
+	
+	-- [06-Feb-2020]
+	IF reasonCode = API_REASON_CODE_SERVICE_TIMEOUT_ERROR THEN
+		RETURN API_REASON_MESSAGE_SERVICE_TIMEOUT_ERROR;
+	END IF;
+	
+	-- [16-Jun-2020]
+	IF reasonCode = API_REASON_CODE_OPEN_ERROR THEN
+		RETURN API_REASON_MESSAGE_OPEN_ERROR;
+	END IF;
+	IF reasonCode = API_REASON_CODE_OPEN_WARNING THEN
+		RETURN API_REASON_MESSAGE_OPEN_WARNING;
+	END IF;
+	IF reasonCode = API_REASON_CODE_OPEN_INFO THEN
+		RETURN API_REASON_MESSAGE_OPEN_INFO;
+	END IF;
+
+
+	-- [08-Jan-2020]
+	IF reasonCode = API_REASON_CODE_UNABLE_TO_FORWARD_CLIENT_GATEWAY THEN
+		RETURN API_REASON_MESSAGE_UNABLE_TO_FORWARD_CLIENT_GATEWAY;
+	END IF;	
+	RETURN API_REASON_MESSAGE_DEFAULT;
+
+END;
+
+-- [10-Jan-2020]  Business reason code to message mapping lookup. Use when OPTIMIZE_FOR_UNIFIED_API = TRUE.
+CREATE FUNCTION lookupExtendedReasonMessage (IN reasonCode CHARACTER) RETURNS CHARACTER
+BEGIN
+	
+	-- [20-Jan-2020]
+	IF reasonCode = API_REASON_CODE_TRANSACTION_ACCEPTED THEN 
+		RETURN API_REASON_MESSAGE_TRANSACTION_ACCEPTED;
+	END IF;
+	-- [20-Jan-2020]
+	IF reasonCode = API_REASON_CODE_TRANSACTION_REJECTED THEN 
+		RETURN API_REASON_MESSAGE_TRANSACTION_REJECTED;
+	END IF;
+
+	IF reasonCode = API_REASON_CODE_INVALID_CLIENT_CODE THEN 
+		RETURN API_REASON_MESSAGE_INVALID_CLIENT_CODE;
+	END IF;
+	IF reasonCode = API_REASON_CODE_INVALID_VIRTUAL_ACCOUNT_NUMBER THEN 
+		RETURN API_REASON_MESSAGE_INVALID_VIRTUAL_ACCOUNT_NUMBER;
+	END IF;
+	IF reasonCode = API_REASON_CODE_CLIENT_CODE_VIRTUAL_ACCOUNT_NUMBER_MISMATCH THEN 
+		RETURN API_REASON_MESSAGE_CLIENT_CODE_VIRTUAL_ACCOUNT_NUMBER_MISMATCH;
+	END IF;
+	IF reasonCode = API_REASON_CODE_DUPLICATE_TRANSACTION_ID THEN 
+		RETURN API_REASON_MESSAGE_DUPLICATE_TRANSACTION_ID;
+	END IF;
+	IF reasonCode = API_REASON_CODE_MISMATCH_CLIENT_ACCOUNT_NUMBER THEN 
+		RETURN API_REASON_MESSAGE_MISMATCH_CLIENT_ACCOUNT_NUMBER;
+	END IF;
+	IF reasonCode = API_REASON_CODE_INVALID_SENDER_IFSC_CODE THEN 
+		RETURN API_REASON_MESSAGE_INVALID_SENDER_IFSC_CODE;
+	END IF;
+	IF reasonCode = API_REASON_CODE_INVALID_CLIENT_IFSC_CODE THEN 
+		RETURN API_REASON_MESSAGE_INVALID_CLIENT_IFSC_CODE;
+	END IF;
+
+	-- [15-Jan-2020]:
+	IF reasonCode = API_REASON_CODE_CLIENT_CODE_NOT_FOUND THEN
+		RETURN API_REASON_MESSAGE_CLIENT_CODE_NOT_FOUND;
+	END IF;
+	IF reasonCode = API_REASON_CODE_PAYMENT_MODE_NOT_FOUND THEN
+		RETURN API_REASON_MESSAGE_PAYMENT_MODE_NOT_FOUND;
+	END IF;
+	IF reasonCode = API_REASON_CODE_PAYMENT_MODE_NOT_VALID THEN
+		RETURN API_REASON_MESSAGE_PAYMENT_MODE_NOT_VALID ;
+	END IF;
+	-- [12-Feb-2020]
+	IF reasonCode = API_REASON_CODE_PAYMENT_MODE_TRANSACTION_ID_TYPE_MISMATCH THEN
+		RETURN API_REASON_MESSAGE_PAYMENT_MODE_TRANSACTION_ID_TYPE_MISMATCH ;
+	END IF;
+	IF reasonCode = API_REASON_CODE_CURRENCY_NOT_ACCEPTED THEN
+		RETURN API_REASON_MESSAGE_CURRENCY_NOT_ACCEPTED ;
+	END IF;
+	
+	-- Refund / Reversal.
+	IF reasonCode = API_REASON_CODE_REMITTER_ACCOUNT_NUMBER_NOT_FOUND THEN
+		RETURN API_REASON_MESSAGE_REMITTER_ACCOUNT_NUMBER_NOT_FOUND;
+	END IF;
+	IF reasonCode = API_REASON_CODE_REVERSAL_STATUS_NOT_FOUND THEN
+		RETURN API_REASON_MESSAGE_REVERSAL_STATUS_NOT_FOUND;
+	END IF;
+	IF reasonCode = API_REASON_CODE_REVERSAL_STATUS_CODE_NOT_VALID THEN
+		RETURN API_REASON_MESSAGE_REVERSAL_STATUS_CODE_NOT_VALID;
+	END IF;
+	IF reasonCode = API_REASON_CODE_REFUND_CODE_NOT_FOUND THEN
+		RETURN API_REASON_MESSAGE_REFUND_CODE_NOT_FOUND;
+	END IF;
+	IF reasonCode = API_REASON_CODE_REJECTION_REASON_NOT_PROVIDED THEN
+		RETURN API_REASON_MESSAGE_REJECTION_REASON_NOT_PROVIDED;
+	END IF;
+	IF reasonCode = API_REASON_CODE_REVERSAL_STATUS_INCONSISTENT THEN
+		RETURN API_REASON_MESSAGE_REVERSAL_STATUS_INCONSISTENT;
+	END IF;
+
+	-- [24-Jan-2020]: Delegate to the basic lookup first.
+	RETURN COALESCE(lookupReasonMessage(reasonCode), API_REASON_MESSAGE_DEFAULT);
+
+END;
+
+
+-- Maps reason code to a generic reason code.
+CREATE FUNCTION lookupGenericReasonCode(IN reasonCode CHARACTER) RETURNS CHARACTER
+BEGIN
+	IF reasonCode = API_REASON_CODE_UNSUPPORTED_API_VERSION OR 
+		reasonCode = API_REASON_CODE_REQUEST_ID_NOT_FOUND OR
+		reasonCode = API_REASON_CODE_REQUEST_DATETIME_NOT_FOUND_NOT_VALID OR
+		reasonCode = API_REASON_CODE_PRIORITY_CODE_NOT_VALID OR
+		reasonCode = API_REASON_CODE_RESENT_INDICATOR_INCONSISTENT OR 
+		
+		-- [18-Jan-2020] Refund / Reversal
+		reasonCode = API_REASON_CODE_REMITTER_ACCOUNT_NUMBER_NOT_FOUND OR
+		reasonCode = API_REASON_CODE_REVERSAL_STATUS_NOT_FOUND OR
+		reasonCode = API_REASON_CODE_REVERSAL_STATUS_CODE_NOT_VALID OR
+		reasonCode = API_REASON_CODE_REFUND_CODE_NOT_FOUND OR 
+		reasonCode = API_REASON_CODE_REVERSAL_STATUS_INCONSISTENT THEN
+		
+		RETURN API_REASON_CODE_REQUEST_NOT_VALID;
+	END IF;
+
+	IF reasonCode = API_REASON_CODE_API_VERSION_MISMATCH OR 
+		reasonCode = API_REASON_CODE_REQUEST_ID_MISMATCH OR 
+		reasonCode = API_REASON_CODE_REQUEST_DATETIME_MISMATCH OR 
+		reasonCode = API_REASON_CODE_PRIORITY_CODE_MISMATCH OR 
+		reasonCode = API_REASON_CODE_RESENT_INDICATOR_MISMATCH THEN 
+		RETURN API_REASON_CODE_RESPONSE_NOT_VALID;
+	END IF;	
+	
+	-- Communication errors.
+	IF reasonCode = API_REASON_CODE_COMMUNICATION_ERROR THEN
+		RETURN API_REASON_CODE_COMMUNICATION_ERROR;
+	END IF;
+
+	IF reasonCode = API_REASON_CODE_CLIENT_SERVICE_TIMEOUT_ERROR THEN
+		RETURN API_REASON_CODE_CLIENT_SERVICE_TIMEOUT_ERROR;
+	END IF;
+
+	IF reasonCode = API_REASON_CODE_CLIENT_SERVICE_UNAVAILABLE_ERROR THEN
+		RETURN API_REASON_CODE_CLIENT_SERVICE_UNAVAILABLE_ERROR;
+	END IF;
+	
+	-- [16-Jun-2020]: General reason codes to take any meaningful message set within the customer specific deployment.
+	IF reasonCode = API_REASON_CODE_OPEN_ERROR THEN
+		RETURN API_REASON_CODE_OPEN_ERROR;
+	END IF;
+	IF reasonCode = API_REASON_CODE_OPEN_WARNING THEN
+		RETURN API_REASON_CODE_OPEN_WARNING;
+	END IF;
+	IF reasonCode = API_REASON_CODE_OPEN_INFO THEN
+		RETURN API_REASON_CODE_OPEN_INFO;
+	END IF;
+	
+
+	RETURN API_REASON_CODE_UNKNOWN;
+END;
+
+-- Boilerplate API response message building.
+-- Business data fields are not included.
+CREATE FUNCTION buildDefaultAPIResponse(IN refAPIRequest REFERENCE,
+																						INOUT refAPIResponse REFERENCE)
+BEGIN
+	CALL buildAPIResponse(refAPIRequest, refAPIResponse, FALSE);
+END;
+
+-- Boilerplate API response message building.
+-- Used when even the basic request fails parsing leaving us with no API request to build a response from. 
+-- Only option left is to return back a bare API response created out of defaults and an HTTP Status.
+CREATE FUNCTION buildBareAPIResponse(INOUT refAPIResponse REFERENCE, 
+										IN completionCode INTEGER, IN reasonCode CHARACTER)
+BEGIN
+	SET refAPIResponse.api_version = DEFAULT_API_VERSION;
+	SET refAPIResponse.response_id = UCASE(UUIDASCHAR);
+	SET refAPIResponse.response_datetime = CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'IU');
+
+	-- [14-Jan-2020]: Add the mandatory fields missing from the request to ensure that the response does not fail validation at the client end.
+	SET refAPIResponse.request_id = API_DUMMY_VALUE_API_REQUEST_ID;
+	SET refAPIResponse.request_datetime = API_DUMMY_VALUE_API_REQUEST_DATETIME;
+	SET refAPIResponse.request_priority = CAST(API_REQUEST_PRIORITY_DEFAULT AS CHARACTER);
+	SET refAPIResponse.resent_indicator = 'FALSE';
+
+--	IF isResentMessage THEN
+--		SET refAPIResponse.original_request_id = API_DUMMY_VALUE_API_REQUEST_ID;
+--		SET refAPIResponse.original_request_datetime = API_DUMMY_VALUE_API_REQUEST_DATETIME;
+--		SET refAPIResponse.original_request_priority = CAST(API_REQUEST_PRIORITY_DEFAULT AS CHARACTER);
+--	END IF;
+	
+	SET refAPIResponse.test_indicator = 'FALSE';
+	
+	-- API Completion Code, Reason Code & Message placeholders. These will eventually be set in the main 
+	-- application code before sending the response back to the caller.
+	SET refAPIResponse.completion_code = completionCode;
+	SET refAPIResponse.reason_code = reasonCode;
+	SET refAPIResponse.message = lookupReasonMessage(reasonCode);
+
+END;
+
+-- Boilerplate API response message building.
+-- Will add the missing mandatory field in the response to the client so that the message does not fail validation at the client end.
+CREATE FUNCTION buildAPIResponse(IN refAPIRequest REFERENCE, 
+																		  INOUT refAPIResponse REFERENCE,
+																		  IN includeBusinessDataIndicator BOOLEAN)
+BEGIN
+	SET refAPIResponse.api_version = COALESCE(refAPIRequest.api_version,  DEFAULT_API_VERSION);
+	SET refAPIResponse.response_id = UCASE(UUIDASCHAR);
+	SET refAPIResponse.response_datetime = CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'IU');
+
+	-- [14-Jan-2020]: Add the mandatory fields missing from the request to ensure that the response does not fail validation at the client end.
+	SET refAPIResponse.request_id = COALESCE(refAPIRequest.request_id, API_DUMMY_VALUE_API_REQUEST_ID);
+	SET refAPIResponse.request_datetime = COALESCE(refAPIRequest.request_datetime, API_DUMMY_VALUE_API_REQUEST_DATETIME);
+	
+	-- include business data condition.
+	IF includeBusinessDataIndicator THEN
+		-- include business data condition [true].
+		-- SET refAPIResponse.*[] = refAPIRequest.*[];
+
+			FOR refAPIRequestField AS refAPIRequest.*[] DO
+				DECLARE chAPIRequestFieldName CHARACTER FIELDNAME(refAPIRequestField);
+				IF NOT(chAPIRequestFieldName = 'api_version'  OR  
+					chAPIRequestFieldName = 'request_id'  OR  
+					chAPIRequestFieldName = 'request_datetime') THEN
+					SET refAPIResponse.{chAPIRequestFieldName} = refAPIRequestField;
+				END IF;	
+			END FOR;
+
+		-- [14-Jan-2020]: Add the mandatory fields missing from the request to ensure that the response does not fail validation at the client end.
+		IF CAST(COALESCE(refAPIRequest.resent_indicator, 'FALSE') AS BOOLEAN) THEN
+			SET refAPIResponse.original_request_id = COALESCE(refAPIRequest.original_request_id, 
+				API_DUMMY_VALUE_API_ORIGINAL_REQUEST_ID);
+
+			SET refAPIResponse.original_request_datetime = COALESCE(refAPIRequest.original_request_datetime, 
+				API_DUMMY_VALUE_API_ORIGINAL_REQUEST_DATETIME);
+		END IF;
+		
+	ELSE
+		-- include business data condition [false].
+		-- Either we copy request fields on to the response and remove the business data fields
+		-- or we selectively copy the non-business data fields from the request to response.
+
+		-- [14-Jan-2020]: Add the mandatory fields missing from the request to ensure that the response does not fail validation at the client end.
+		--		SET refAPIResponse.request_id = COALESCE(refAPIRequest.request_id, API_DUMMY_VALUE_API_REQUEST_ID);
+		--		SET refAPIResponse.request_datetime = COALESCE(refAPIRequest.request_datetime, API_DUMMY_VALUE_API_REQUEST_DATETIME);
+
+		IF COALESCE(refAPIRequest.sender_system_id, '') <> '' THEN
+			SET refAPIResponse.sender_system_id = refAPIRequest.sender_system_id;
+		END IF;
+
+		IF COALESCE(refAPIRequest.sender_user_id, '') <> '' THEN
+			SET refAPIResponse.sender_user_id = refAPIRequest.sender_user_id;
+			-- User ID Type is considered only if User ID is present in the message.
+			IF COALESCE(refAPIRequest.sender_user_id_type, '') <> '' THEN
+				SET refAPIResponse.sender_user_id_type = refAPIRequest.sender_user_id_type;
+			END IF;
+		END IF;
+
+		IF COALESCE(refAPIRequest.request_priority, '') <> '' THEN
+			SET refAPIResponse.request_priority = refAPIRequest.request_priority;
+		END IF;
+		-- resent-indicator condition.
+		IF CAST(COALESCE(refAPIRequest.resent_indicator, 'FALSE') AS BOOLEAN) THEN
+			SET refAPIResponse.resent_indicator = refAPIRequest.resent_indicator;
+			-- Fields correlating the current request to the very first / original request
+			-- are considered only if Resent Indicator is present in the message and is TRUE.
+
+			-- [14-Jan-2020]: Add the mandatory fields missing from the request to ensure that the response does not fail validation at the client end.
+			SET refAPIResponse.original_request_id = COALESCE(refAPIRequest.original_request_id, 
+				API_DUMMY_VALUE_API_ORIGINAL_REQUEST_ID);
+
+			-- [14-Jan-2020]: Add the mandatory fields missing from the request to ensure that the response does not fail validation at the client end.
+			SET refAPIResponse.original_request_datetime = COALESCE(refAPIRequest.original_request_datetime, 
+				API_DUMMY_VALUE_API_ORIGINAL_REQUEST_DATETIME);
+
+			IF COALESCE(refAPIRequest.original_sender_system_id, '') <> '' THEN
+				SET refAPIResponse.original_sender_system_id = refAPIRequest.original_sender_system_id;
+			END IF;
+
+			IF COALESCE(refAPIRequest.original_sender_user_id, '') <> '' THEN
+				SET refAPIResponse.original_sender_user_id = refAPIRequest.original_sender_user_id;
+				-- User ID Type is considered only if User ID is present in the message.
+				IF COALESCE(refAPIRequest.original_sender_user_id_type, '') <> '' THEN
+					SET refAPIResponse.original_sender_user_id_type = refAPIRequest.original_sender_user_id_type;
+				END IF;
+			END IF;
+
+			IF COALESCE(refAPIRequest.original_request_priority, '') <> '' THEN
+				SET refAPIResponse.original_request_priority = refAPIRequest.original_request_priority;
+			END IF;
+
+		END IF; -- resent-indicator condition end.
+		
+		-- Test Indicator.
+		IF CAST(COALESCE(refAPIRequest.test_indicator, 'FALSE') AS BOOLEAN) <> FALSE THEN
+			SET refAPIResponse.test_indicator = refAPIRequest.test_indicator;
+		END IF;
+
+	END IF;	
+	
+	-- API Completion Code, Reason Code & Message placeholders. These will eventually be set in the main 
+	-- application code before sending the response back to the caller.
+	SET refAPIResponse.completion_code = '';
+	SET refAPIResponse.reason_code = '';
+	SET refAPIResponse.message VALUE = NULL;
+
+END;
+
+-- Add API completion code, reason code, message.
+CREATE FUNCTION addResponseStatus(INOUT refAPIResponse REFERENCE,
+IN completionCode INTEGER, IN reasonCode CHARACTER,
+IN message CHARACTER)
+BEGIN
+	SET refAPIResponse.completion_code = completionCode;
+	SET refAPIResponse.reason_code = reasonCode;
+	SET refAPIResponse.message = message;
+END;
+
+-- Evaluates if the API request if retried has the possibility of succeeding. 
+-- Examples: Any transport level exception such as a Socket Timeout or a Socket Closure on the Remote Server or 
+-- Host Not Found (Client Service / Endpoint Unavailability) has a chance of succeeding if the request is resent to 
+-- the client at a later time.
+CREATE FUNCTION defaultEvaluateAddAPIRequestRetryHint(IN refExceptionList REFERENCE, INOUT refAPIResponse REFERENCE)
+BEGIN
+	SET refAPIResponse.retry_indicator = FALSE;
+	IF NOT EXISTS(refExceptionList.*[]) THEN
+		RETURN;
+	END IF;
+	
+	-- Test if the request can be retried.
+	SET refAPIResponse.retry_indicator =  isAPIRequestRetriable(refExceptionList);
+	
+	IF refAPIResponse.retry_indicator THEN
+	-- SET refAPIResponse.retry_after_datetime VALUE = NULL;
+	-- SET refAPIResponse.retry_after_interval VALUE = NULL;
+	END IF;
+	
+END;
+
+-- Simple default retry hints added to the response assuming the retry condition evaluation vis-a-vis the HTTP Status Code and / or Exception List 
+-- and API_MANAGED_RETRY configuration (client-specific) is TRUE.
+-- Only one of the two parameters Retry-After-DateTime (absolute value after which a API Request retry is suggested)  and 
+-- Retry-After-Interval. The first parameter will get a higher precedence than second.
+-- 
+CREATE FUNCTION defaultAddAPIRequestRetryHint(IN dtRetryAfterDateTime TIMESTAMP, IN intRetryAfterIntervalSeconds INTEGER, INOUT refAPIResponse REFERENCE)
+BEGIN
+	SET refAPIResponse.retry_indicator = TRUE;
+	
+	IF NOT(dtRetryAfterDateTime = NULL) THEN
+		-- IBM ACE Infocenter: 
+		-- 		https://www.ibm.com/support/knowledgecenter/SSMKHH_9.0.0/com.ibm.etools.mft.doc/ak05616_.htm
+		-- Pattern: I 
+		-- 		ISO8601 Date/Time (up to yyyy-MM-dd'T'HH:mm:ss. SSSZZZ)
+		-- 		Example: 	2006-10-07T12:06:56.568+01:00
+		-- Pattern: IU
+		-- 		ISO8601 Date/Time (similar to I, but ZZZ with output "Z" if the time zone is +00:00)
+		-- 		Example: 	2006-10-07T12:06:56.568+01:00
+		-- 							2003-12 -15T15:42:12.000Z
+		
+		SET refAPIResponse.retry_after_datetime  = CAST(dtRetryAfterDateTime AS CHARACTER FORMAT 'I');
+	ELSE
+		SET refAPIResponse.retry_after_interval  = intRetryAfterIntervalSeconds;
+	END IF;
+	
+END;
+
+-- Walks through the ExceptionList tree to determine the cause of the exception / failure and determines if 
+-- the request has a chance of succeeding if resent to the client at a later time.
+CREATE FUNCTION isAPIRequestRetriable (IN refExceptionList REFERENCE)  RETURNS BOOLEAN
+BEGIN
+		-- TODO: Walk through the exception tree and determine the cause of error.
+		RETURN TRUE;
+END;
+
+CREATE FUNCTION isAPIRequestMarkedRetriable (IN refAPIResponse REFERENCE)  RETURNS BOOLEAN
+BEGIN
+		RETURN COALESCE(refAPIResponse.retry_indicator, FALSE);
+END;
+
+-- [14-Jan-2020] Consult the HTTP Status Code and verify if the API request can be retried.
+CREATE FUNCTION isAPIRequestRetriableBasisHTTPStatus(IN httpStatusCode INTEGER) RETURNS BOOLEAN
+BEGIN
+		IF httpStatusCode = API_HTTP_STATUS_CODE_BAD_GATEWAY OR 
+			httpStatusCode = API_HTTP_STATUS_CODE_GATEWAY_TIMEOUT OR 
+			httpStatusCode = API_HTTP_STATUS_CODE_SERVICE_UNAVAILABLE OR
+			httpStatusCode = API_HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR
+		THEN
+			RETURN TRUE;
+		END IF;	
+		RETURN FALSE;
+END;
+
+-- Validates the common (non business data) fields in the response message.
+-- This method will come into play if the client has adopted our API (the API spec we expose to our internal 
+-- systems / applications). 
+CREATE FUNCTION performBaseAPIResponseValidation(IN refAPIResponse REFERENCE,
+INOUT refAPIValidationReport REFERENCE)
+BEGIN
+	DECLARE flgAPIResponseValid BOOLEAN TRUE;	
+	IF NOT (assertResponseId(refAPIResponse)) THEN
+		CREATE LASTCHILD OF refAPIValidationReport NAME 'Assertion';
+		DECLARE refLastAssertion REFERENCE TO refAPIValidationReport.Assertion[<];
+
+		SET refLastAssertion.assertion_name = 'Request-ID';
+		SET refLastAssertion.reason_code = API_REASON_CODE_REQUEST_ID_NOT_FOUND;
+		SET refAPIValidationReport.message = lookupReasonMessage(refLastAssertion.reason_code);
+
+		SET flgAPIResponseValid = FALSE;
+	END IF;
+END;
+
+
+-- Correlates the fields in the request (sender to ACE) with the corresponding ones in the response (client to ACE).
+-- This method will come into play if the client has adopted our API (the API spec we expose to our internal 
+-- systems / applications). 
+CREATE FUNCTION  performBaseAPIRequestResponseCorrelationalValidation(IN refAPIRequest REFERENCE, 
+										IN  refClientAPIResponse REFERENCE, INOUT refAPIValidationReport REFERENCE) 
+BEGIN
+	DECLARE flgAPIResponseValid BOOLEAN TRUE;
+	
+	-- Apply common validations.
+	IF NOT (refClientAPIResponse.api_version  = refAPIRequest.api_version) THEN
+		CALL recordAPIMessageAssertion(refAPIValidationReport,  'API-Version', API_REASON_CODE_API_VERSION_MISMATCH);
+		SET flgAPIResponseValid = FALSE;
+	END IF;
+
+	IF NOT (refClientAPIResponse.request_id  = refAPIRequest.request_id) THEN
+		CALL recordAPIMessageAssertion(refAPIValidationReport,  'Request-ID', API_REASON_CODE_REQUEST_ID_MISMATCH);
+		SET flgAPIResponseValid = FALSE;
+	END IF;
+
+	IF NOT (refClientAPIResponse.request_datetime  = refAPIRequest.request_datetime) THEN
+		CALL recordAPIMessageAssertion(refAPIValidationReport,  'Request-DateTime', API_REASON_CODE_REQUEST_DATETIME_MISMATCH);
+		SET flgAPIResponseValid = FALSE;
+	END IF;
+	
+	IF NOT (refClientAPIResponse.request_priority  = refAPIRequest.request_priority) THEN
+		CALL recordAPIMessageAssertion(refAPIValidationReport,  'Request-Priority', API_REASON_CODE_PRIORITY_CODE_MISMATCH);
+		SET flgAPIResponseValid = FALSE;
+	END IF;
+
+	IF NOT (refClientAPIResponse.resent_indicator = refAPIRequest.resent_indicator) THEN
+		CALL recordAPIMessageAssertion(refAPIValidationReport,  'Resent-Indicator', API_REASON_CODE_RESENT_INDICATOR_MISMATCH);
+		SET flgAPIResponseValid = FALSE;
+	END IF;
+
+	IF NOT (assertResentIndicator(refClientAPIResponse)) THEN
+		CALL recordAPIMessageAssertion(refAPIValidationReport,  'Resent-Indicator', API_REASON_CODE_RESENT_INDICATOR_INCONSISTENT);
+		SET flgAPIResponseValid = FALSE;
+	END IF;
+
+END;
+
+-- Map the our (and not client service's) Reason Code with the HTTP Status Code.
+CREATE FUNCTION mapHTTPStatusCode (IN chReasonCode CHARACTER)  RETURNS INTEGER
+BEGIN
+	IF chReasonCode = API_REASON_CODE_OK THEN
+		RETURN API_HTTP_STATUS_CODE_OK;
+	END IF;	
+
+	IF chReasonCode = API_REASON_CODE_REQUEST_ACCEPTED THEN
+		RETURN API_HTTP_STATUS_CODE_OK;
+	END IF;	
+
+	IF chReasonCode = API_REASON_CODE_REQUEST_PROVISIONALLY_ACCEPTED THEN		-- [20-Jan-2020]
+		RETURN API_HTTP_STATUS_CODE_ACCEPTED;
+	END IF;	
+
+	IF chReasonCode = API_REASON_CODE_OBJECT_CREATED THEN
+		RETURN API_HTTP_STATUS_CODE_CREATED;
+	END IF;	
+
+	IF chReasonCode = API_REASON_CODE_REQUEST_REJECTED THEN	-- [20-Jan-2020]
+		RETURN API_HTTP_STATUS_CODE_CONFLICT;
+	END IF;	
+
+
+	IF chReasonCode = API_REASON_CODE_REQUEST_NOT_VALID THEN
+		RETURN API_HTTP_STATUS_CODE_BAD_REQUEST;
+	END IF;	
+
+	IF chReasonCode = API_REASON_CODE_CLIENT_END_BAD_REQUEST THEN
+		RETURN API_HTTP_STATUS_CODE_BAD_REQUEST;
+	END IF;	
+	
+	-- [10-Jan-2020]: Forbidden.
+	IF chReasonCode = API_REASON_CODE_REQUEST_FORBIDDEN OR 
+		chReasonCode = API_REASON_CODE_SECURITY_EXCEPTION OR 								-- [16-Jun-2020]
+		chReasonCode = API_REASON_CODE_REMOTE_SECURITY_EXCEPTION THEN		-- [16-Jun-2020]
+		RETURN API_HTTP_STATUS_CODE_FORBIDDEN;
+	END IF;	
+	----------
+
+	IF chReasonCode = API_REASON_CODE_SECURITY_EXCEPTION_INTEGRITY OR 
+		chReasonCode = API_REASON_CODE_SECURITY_EXCEPTION_CONFIDENTIALLY OR 	-- [04-Aug-2020]
+		chReasonCode = API_REASON_CODE_SECURITY_EXCEPTION_CONFIGRITY THEN		-- [04-Aug-2020]
+		RETURN API_HTTP_STATUS_CODE_BAD_REQUEST;
+	END IF;	
+	
+	IF chReasonCode = API_REASON_CODE_RESPONSE_NOT_VALID THEN
+		RETURN API_HTTP_STATUS_CODE_BAD_GATEWAY;
+	END IF;	
+
+	IF chReasonCode = API_REASON_CODE_RESPONSE_NOT_PARSEABLE THEN
+		RETURN API_HTTP_STATUS_CODE_BAD_GATEWAY;
+	END IF;	
+	
+	IF chReasonCode = API_REASON_CODE_CLIENT_SERVICE_TIMEOUT_ERROR THEN
+		RETURN API_HTTP_STATUS_CODE_GATEWAY_TIMEOUT;
+	END IF;	
+
+	IF chReasonCode = API_REASON_CODE_COMMUNICATION_ERROR OR 
+		 chReasonCode = API_REASON_CODE_CLIENT_SERVICE_UNAVAILABLE_ERROR  OR
+		 chReasonCode = API_REASON_CODE_CLIENT_SERVICE_BAD_GATEWAY_ERROR OR
+		chReasonCode = API_REASON_CODE_CLIENT_SERVICE_TIMEOUT_ERROR
+		 THEN
+		-- RETURN API_HTTP_STATUS_CODE_SERVICE_UNAVAILABLE;			--[20-Jan-2020]
+		RETURN API_HTTP_STATUS_CODE_BAD_GATEWAY;
+	END IF;	
+
+	-- [20-Jan-2020]
+	IF chReasonCode = API_REASON_CODE_UNKNOWN OR 
+		chReasonCode = API_REASON_CODE_UNEXPECTED_FAILURE OR 
+		chReasonCode = API_REASON_CODE_RESPONSE_INCONSISTENT THEN 	-- [05-Sep-2020]
+		RETURN API_HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR;
+	END IF;	
+	
+	IF chReasonCode = API_REASON_CODE_UNEXPECTED_INTERMITTENT_FAILURE THEN
+		RETURN API_HTTP_STATUS_CODE_MULTI_STATUS;
+	END IF;	
+	
+	-- [06-Feb-2020]
+	IF chReasonCode = API_REASON_CODE_SERVICE_TIMEOUT_ERROR THEN
+		RETURN API_HTTP_STATUS_CODE_SERVICE_UNAVAILABLE;
+	END IF;	
+
+	RETURN  mapExtendedHTTPStatusCode(chReasonCode);
+	
+END;
+
+
+-- Map the Common Client (if OPTIMIZE_FOR_UNIFIED_API = TRUE) Reason Code with the HTTP Status Code.
+CREATE FUNCTION mapExtendedHTTPStatusCode (IN chReasonCode CHARACTER)  RETURNS INTEGER
+BEGIN
+		-- [20-Jan-2020]
+	IF chReasonCode = API_REASON_CODE_TRANSACTION_ACCEPTED THEN
+		RETURN API_HTTP_STATUS_CODE_OK;
+	END IF;
+		-- [20-Jan-2020]
+	IF chReasonCode = API_REASON_CODE_TRANSACTION_REJECTED THEN
+		RETURN API_HTTP_STATUS_CODE_CONFLICT;
+	END IF;
+
+	IF chReasonCode = API_REASON_CODE_INVALID_CLIENT_CODE OR 
+		 chReasonCode = API_REASON_CODE_INVALID_VIRTUAL_ACCOUNT_NUMBER  OR 
+		 chReasonCode = API_REASON_CODE_CLIENT_CODE_VIRTUAL_ACCOUNT_NUMBER_MISMATCH OR
+		 chReasonCode = API_REASON_CODE_DUPLICATE_TRANSACTION_ID OR
+		 chReasonCode = API_REASON_CODE_MISMATCH_CLIENT_ACCOUNT_NUMBER OR
+		 chReasonCode = API_REASON_CODE_INVALID_SENDER_IFSC_CODE OR
+		 chReasonCode = API_REASON_CODE_INVALID_CLIENT_IFSC_CODE OR 
+		 chReasonCode = API_REASON_CODE_CLIENT_CODE_NOT_FOUND OR			-- [15-Jan-2020]
+		 chReasonCode = API_REASON_CODE_PAYMENT_MODE_NOT_FOUND 	OR 	-- [15-Jan-2020]
+		 chReasonCode = API_REASON_CODE_PAYMENT_MODE_NOT_VALID 		OR	-- [15-Jan-2020]
+		 chReasonCode = API_REASON_CODE_PAYMENT_MODE_TRANSACTION_ID_TYPE_MISMATCH 	OR -- [12-Feb-2020]
+		 chReasonCode = API_REASON_CODE_CURRENCY_NOT_ACCEPTED 	OR -- [12-Feb-2020]
+		 chReasonCode = API_REASON_CODE_REMITTER_ACCOUNT_NUMBER_NOT_FOUND 	OR	-- [18-Jan-2020]
+		 chReasonCode = API_REASON_CODE_REVERSAL_STATUS_NOT_FOUND 	OR							-- [18-Jan-2020]
+		 chReasonCode = API_REASON_CODE_REVERSAL_STATUS_CODE_NOT_VALID 	OR					-- [18-Jan-2020]
+		 chReasonCode = 	API_REASON_CODE_REFUND_CODE_NOT_FOUND  OR										-- [18-Jan-2020]
+		 chReasonCode = 	API_REASON_CODE_REVERSAL_STATUS_INCONSISTENT	-- [12-Feb-2020]
+		THEN
+		RETURN API_HTTP_STATUS_CODE_UNPROCESSABLE_ENTITY;
+	END IF;
+
+	-- [18-Jan-2020]: Refund / Reversal
+	IF chReasonCode = API_REASON_CODE_REJECTION_REASON_NOT_PROVIDED THEN
+		-- The option was betwen OK and Accepted. However the Accepted indicates post-processing which clearly is not the case here.
+		RETURN API_HTTP_STATUS_CODE_OK;			-- [18-Jan-2020]
+	END IF;	
+	
+	-- [16-Jun-2020]: Default. This can be a server error or the client / customer service error or a client (injected) error. 
+	-- Need to determine at runtime, whom to blame and hence the HTTP Status Code 4XX or 5XX.
+	IF chReasonCode = API_REASON_CODE_OPEN_ERROR THEN
+		RETURN API_HTTP_STATUS_CODE_UNKNOWN;
+	END IF;
+	IF chReasonCode = API_REASON_CODE_OPEN_WARNING OR 
+		chReasonCode = API_REASON_CODE_OPEN_INFO THEN
+		RETURN API_HTTP_STATUS_CODE_OK;
+	END IF;
+	
+	RETURN API_HTTP_STATUS_CODE_UNKNOWN;
+END;
+
+-- Map HTTP Status Code received from the client service to appropriate Reason Code.
+-- All 5XX series status codes should be translated into 502 Bad Gateway. 
+-- 5XX indicates problem at the remote client service end and not ours. 
+-- We need to differentiate it from our 5XX status codes that indicate issues internal to 
+-- our service (as opposed to the client service).
+-- All 4XX series status codes should be should passed as-is. 4XX indicates something 
+-- wrong with the request we passed the remote client service. So if the remote service 
+-- blames us, we blame our sender (caller). Hence relay 4XX status codes as is.  We still 
+-- send 4XX for request errors that we catch (through our validations) at our end.
+-- All 2XX series status codes should be should passed as-is. 2XX indicates success.
+-- We happily convey that to our caller. 
+-- 1XX (Information) and 3XX (Redirections) are not relevant.
+CREATE FUNCTION mapReasonCode (IN numHTTPStatusCode INTEGER)  RETURNS CHARACTER
+BEGIN
+	IF numHTTPStatusCode = API_HTTP_STATUS_CODE_OK THEN
+		RETURN API_REASON_CODE_OK;			-- [20-Jan-2020]:  or  API_REASON_CODE_ACCEPTED. TODO: Check if this will create an ambiguity issue.
+	END IF;	
+
+	IF numHTTPStatusCode = API_HTTP_STATUS_CODE_ACCEPTED THEN
+		RETURN API_REASON_CODE_REQUEST_PROVISIONALLY_ACCEPTED;
+	END IF;	
+
+	IF numHTTPStatusCode = API_HTTP_STATUS_CODE_CREATED THEN
+		RETURN API_REASON_CODE_OBJECT_CREATED;
+	END IF;	
+
+	IF numHTTPStatusCode = API_HTTP_STATUS_CODE_CONFLICT THEN
+		RETURN API_REASON_CODE_REQUEST_REJECTED;
+	END IF;	
+
+	IF numHTTPStatusCode = API_HTTP_STATUS_CODE_BAD_REQUEST THEN
+		RETURN API_REASON_CODE_REQUEST_NOT_VALID;
+	END IF;	
+	
+	-- [10-Jan-2020]: Forbidden.
+	IF numHTTPStatusCode = API_HTTP_STATUS_CODE_FORBIDDEN THEN
+		RETURN API_REASON_CODE_REQUEST_REMOTE_FORBIDDEN;
+	END IF;	
+	
+	IF numHTTPStatusCode = API_HTTP_STATUS_CODE_UNPROCESSABLE_ENTITY THEN
+		RETURN API_REASON_CODE_RESPONSE_NOT_VALID;
+	END IF;	
+
+	----------
+	-- 5XX series status code 
+	IF numHTTPStatusCode = API_HTTP_STATUS_CODE_BAD_GATEWAY THEN 	
+		-- Bad Gateway: We dont know what the client service sent out. Could be our fault or could be their.
+		RETURN API_REASON_CODE_CLIENT_SERVICE_BAD_GATEWAY_ERROR;	
+	END IF;	
+
+	IF numHTTPStatusCode =  API_HTTP_STATUS_CODE_GATEWAY_TIMEOUT THEN
+		RETURN API_REASON_CODE_CLIENT_SERVICE_TIMEOUT_ERROR;
+	END IF;	
+
+	IF numHTTPStatusCode = API_HTTP_STATUS_CODE_SERVICE_UNAVAILABLE OR
+		numHTTPStatusCode = API_HTTP_STATUS_CODE_PAGE_NOT_FOUND  THEN
+		RETURN API_REASON_CODE_COMMUNICATION_ERROR;
+	END IF;
+
+	IF numHTTPStatusCode = API_HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR THEN
+		RETURN API_REASON_CODE_CLIENT_SERVICE_UNAVAILABLE_ERROR;
+	END IF;
+
+	RETURN  API_REASON_CODE_UNKNOWN;
+	
+END;
+
+
+CREATE FUNCTION hasValidationFailed (IN refAPIValidationReport REFERENCE) RETURNS BOOLEAN
+BEGIN
+	RETURN (refAPIValidationReport.completion_code <> API_COMPLETION_CODE_SUCCESSFUL);
+END;
+
+CREATE FUNCTION prepareErrorResponse (IN refAPIRequest REFERENCE,  INOUT refAPIResponse REFERENCE,  
+																				  IN completionCode INTEGER,  IN reasonCode CHARACTER, IN apiOptimization BOOLEAN) 
+BEGIN
+	-- Validation failure.
+	-- Prepare API error response.
+	
+	-- Build default API response.
+	CALL buildAPIResponse(refAPIRequest, refAPIResponse, apiOptimization);
+	
+	-- Augment the response with Completion Code, Reason Code, Message.
+	CALL addResponseStatus(refAPIResponse,
+				completionCode,
+				reasonCode,
+				lookupExtendedReasonMessage(reasonCode));		-- [12-Feb-2020]: Using extended reason message instead of base reason message lookup. Extended delegates to base first.
+END;
+
+-- [10-Jan-2020]:  Forbidden. Convenience method.
+CREATE FUNCTION buildAPIRequestForbiddenResponse (IN refAPIRequest REFERENCE,  INOUT refAPIResponse REFERENCE) 
+BEGIN
+	CALL prepareErrorResponse(refAPIRequest, refAPIResponse, API_COMPLETION_CODE_ERROR, API_REASON_CODE_REQUEST_FORBIDDEN, TRUE);
+END;	
+
+-- [10-Jan-2020]:  Recreate API Request from API Response.
+CREATE FUNCTION buildNewAPIRequest(IN refAPIResponse REFERENCE,  INOUT refNewAPIRequest REFERENCE) 
+BEGIN
+	SET refNewAPIRequest.api_version									= refAPIResponse.api_version;
+	SET refNewAPIRequest.request_id 										= UCASE(UUIDASCHAR);
+	SET refNewAPIRequest.request_datetime 						= CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'IU');
+	
+--	SET refNewAPIRequest.channel_id  									= 'IXC';
+	SET refNewAPIRequest.sender_system_id  						= 'IXC';
+
+--	SET refNewAPIRequest.sender_system_user_id  				= '';
+--	SET refNewAPIRequest.sender_system_user_id_type 	= '';
+
+	SET refNewAPIRequest.request_priority  							= refAPIResponse.request_priority;
+	SET refNewAPIRequest.resent_indicator  							= 'TRUE';
+	SET refNewAPIRequest.original_request_id  					= COALESCE(refAPIResponse.original_request_id, refAPIResponse.request_id);
+	SET refNewAPIRequest.original_request_datetime 		= COALESCE(refAPIResponse.original_request_datetime, refAPIResponse.request_datetime);
+	SET refNewAPIRequest.original_channel_id  					= COALESCE(refAPIResponse.original_channel_id, refAPIResponse.channel_id);
+	SET refNewAPIRequest.original_sender_system_id 		  = COALESCE(refAPIResponse.original_sender_system_id, refAPIResponse.sender_system_id);
+	SET refNewAPIRequest.original_sender_system_user_id 
+																						= COALESCE(refAPIResponse.original_sender_system_user_id ,refAPIResponse.sender_system_user_id);
+	SET refNewAPIRequest.original_sender_system_user_id_type 
+																										= COALESCE(refAPIResponse.original_sender_system_user_id_type,refAPIResponse.sender_system_user_id_type);
+	SET refNewAPIRequest.original_request_priority 			= COALESCE(refAPIResponse.original_request_priority,refAPIResponse.request_priority);		-- preserve the original priority.
+	
+	SET refNewAPIRequest.test_indicator  								= refAPIResponse.test_indicator;
+	
+	SET refNewAPIRequest.application_context 					= refAPIResponse.application_context;
+	
+	-- Business Data Fields.
+	SET refNewAPIRequest.client_code  									= refAPIResponse.client_code;
+	SET refNewAPIRequest.virtual_account_number 			= refAPIResponse.virtual_account_number;
+	SET refNewAPIRequest.transaction_amount 					= refAPIResponse.transaction_amount;
+	SET refNewAPIRequest.currency_code  							= refAPIResponse.currency_code;
+	SET refNewAPIRequest.payment_mode  							= refAPIResponse.payment_mode;
+	SET refNewAPIRequest.transaction_id  								= refAPIResponse.transaction_id;
+	SET refNewAPIRequest.transaction_id_type  					= refAPIResponse.transaction_id_type;
+	SET refNewAPIRequest.transaction_datetime 					= refAPIResponse.transaction_datetime;
+	SET refNewAPIRequest.sender_name  								= refAPIResponse.sender_name;
+	-- [19-Feb-2020]: Required for IMPS EAI Payment Instruction API
+	SET refNewAPIRequest.sender_mobile_communication_number  								
+																										= refAPIResponse.sender_mobile_communication_number;
+	
+	SET refNewAPIRequest.sender_account_number 			= refAPIResponse.sender_account_number;
+	SET refNewAPIRequest.sender_bank_name 						= refAPIResponse.sender_bank_name;
+	SET refNewAPIRequest.sender_ifsc_code 							= refAPIResponse.sender_ifsc_code;
+	SET refNewAPIRequest.sender_account_number 			= refAPIResponse.sender_account_number;
+	SET refNewAPIRequest.client_account_name 					= refAPIResponse.client_account_name;
+	-- [19-Feb-2020]: Required for IMPS EAI Payment Instruction API
+	SET refNewAPIRequest.client_mobile_communication_number  								
+																										= refAPIResponse.client_mobile_communication_number;
+	
+	SET refNewAPIRequest.client_account_number 				= refAPIResponse.client_account_number;
+	SET refNewAPIRequest.client_ifsc_code  							= refAPIResponse.client_ifsc_code;
+	SET refNewAPIRequest.client_bank_name  						= refAPIResponse.client_bank_name;
+	
+	SET refNewAPIRequest.narration_1  									= refAPIResponse.narration_1;
+	SET refNewAPIRequest.narration_2									= refAPIResponse.narration_1;
+
+	SET refNewAPIRequest.informational_message 				= refAPIResponse.informational_message;
+
+	IF EXISTS(refAPIResponse.informational_messages.*[]) THEN
+		SET refNewAPIRequest.informational_messages 		= refAPIResponse.informational_messages;
+	END IF;
+				 								 								 						
+	
+--	SET refNewAPIRequest.external_system_references.reference_id 
+--	 								 								 								 	=  refAPIResponse.external_system_references.reference_id;
+--	SET refNewAPIRequest.external_system_references.reference_value 
+--	 								 								 									= refAPIResponse.external_system_references.reference_value;
+	 								 								 											
+	SET refNewAPIRequest.external_system_reference_1 
+	 								 								 								 	=  refAPIResponse.external_system_reference_1;
+	SET refNewAPIRequest.external_system_reference_2 
+	 								 								 								 	=  refAPIResponse.external_system_reference_2;
+	 								 								 								 	
+	SET refNewAPIRequest.client_data_ext  							= refAPIResponse.client_data_ext;
+	
+END;	
+
+-- [18-Feb-2020] Add fields pertaining to Refund Intimation.
+CREATE FUNCTION buildNewAPIRequestRefund(IN refAPIResponse REFERENCE,  INOUT refNewAPIRequest REFERENCE) 
+BEGIN
+	CALL buildNewAPIRequest(refAPIResponse, refNewAPIRequest);
+
+	SET refNewAPIRequest.remitter_account_number 	= refAPIResponse.remitter_account_number;
+	SET refNewAPIRequest.cms_reference_number 			= refAPIResponse.cms_reference_number;
+	SET refNewAPIRequest.refund_payment_status 			= refAPIResponse.refund_payment_status;
+	SET refNewAPIRequest.refund_code 								= refAPIResponse.refund_code;
+	SET refNewAPIRequest.refund_rejection_code 			= refAPIResponse.refund_rejection_code;
+	
+END;
+
+
+-- Check the "Content-Type" HTTP header and return a suitable IBM ACE Message Domain.
+-- [06-May-2020]: REST XML and SOAP Web Services.
+CREATE FUNCTION detectSuitableACEMessageDomain(IN refAPIMessageRoot REFERENCE) RETURNS CHARACTER
+BEGIN
+	DECLARE chTargetMessageDomain CHARACTER NULL;
+	DECLARE chAPIMessageMIMEType CHARACTER LCASE(COALESCE(refAPIMessageRoot.HTTPResponseHeader."Content-Type", ''));
+	
+	IF 			CONTAINS(chAPIMessageMIMEType, CONTENT_TYPE_MIME_JSON)  THEN
+		SET chTargetMessageDomain = 'JSON';
+	ELSEIF 	CONTAINS(chAPIMessageMIMEType, CONTENT_TYPE_MIME_XML) THEN
+		SET chTargetMessageDomain = 'XMLNSC';
+	ELSEIF 	CONTAINS(chAPIMessageMIMEType, CONTENT_TYPE_MIME_SOAP_1_1) OR
+					CONTAINS(chAPIMessageMIMEType, CONTENT_TYPE_MIME_SOAP_1_2) THEN
+		SET chTargetMessageDomain = 'SOAP';
+	ELSEIF 	CONTAINS(chAPIMessageMIMEType, CONTENT_TYPE_MIME_PLAIN_TEXT) THEN			-- [16-Jun-2020]
+		SET chTargetMessageDomain = 'PLAINTEXT';
+	END IF;
+	
+	RETURN chTargetMessageDomain;
+END;
+
+-- [15-Jan-2020]: Moved injectReferenceDataTransportHeaders from PreparePaymentInstruction module for reuse in Retry Handler.
+-- End-to-end traceability and optimization if required.
+CREATE FUNCTION injectReferenceDataTransportHeaders(IN ApplicationLabel CHARACTER, IN MessageFlowLabel CHARACTER,
+				 IN refAPIMessage REFERENCE, INOUT refAPIMessageHeader REFERENCE) 
+BEGIN
+	
+	-- End-to-end traceability.
+	-- refAPIMessageHeader will reference User ("usr" folder).
+	SET refAPIMessageHeader."IXC_Initiating_Application" 					= ApplicationLabel;
+	SET refAPIMessageHeader."IXC_Initiating_Business_Scenario" 		= MessageFlowLabel;
+	SET refAPIMessageHeader."IXC_Initiating_Application_Channel_Id" 
+																															= COALESCE(refAPIMessage.sender_system_id, 
+																																	refAPIMessage.channel_id);
+	SET refAPIMessageHeader."IXC_Initiating_Request_Id" 					= refAPIMessage.request_id;
+	SET refAPIMessageHeader."IXC_Initiating_Request_Datetime" 		= refAPIMessage.request_datetime;
+	SET refAPIMessageHeader."IXC_Request_Priority" 							= CAST(COALESCE(refAPIMessage.request_priority, '3') AS INTEGER);
+	SET refAPIMessageHeader."IXC_Initiating_Original_Request_Id"	= refAPIMessage.original_request_id;
+	SET refAPIMessageHeader."IXC_Initiating_Original_Request_Datetime" 
+																															= refAPIMessage.original_request_datetime;
+	SET refAPIMessageHeader."IXC_Original_Request_Priority" 			= CAST(COALESCE(refAPIMessage.original_request_priority, '3') AS INTEGER);
+	SET refAPIMessageHeader."IXC_Initiating_Test_Indicator" 				= CAST(COALESCE(refAPIMessage.test_indicator, 'FALSE') AS BOOLEAN);
+	SET refAPIMessageHeader."IXC_Client_Code" 									= refAPIMessage.client_code;
+	SET refAPIMessageHeader."IXC_Virtual_Account_Number" 			= refAPIMessage.virtual_account_number;
+	SET refAPIMessageHeader."IXC_Transaction_Amount" 					= CAST(refAPIMessage.transaction_amount AS CHARACTER);
+	SET refAPIMessageHeader."IXC_Currency_Code" 								= refAPIMessage.currency_code;
+	SET refAPIMessageHeader."IXC_Payment_Mode" 								= refAPIMessage.payment_mode;
+	SET refAPIMessageHeader."IXC_Transaction_Datetime" 					= refAPIMessage.transaction_datetime;
+	SET refAPIMessageHeader."IXC_Beneficiary_IFSC_Code" 				= refAPIMessage.sender_ifsc_code;
+	
+END;
+
+
+-- getLastExceptionDetail is taken from the following IBM ACE Infocenter documentation.
+-- https://www.ibm.com/support/knowledgecenter/SSKM8N_8.0.0/com.ibm.etools.mft.doc/ac16830_.htm
+CREATE PROCEDURE getLastExceptionDetail(IN InputTree reference, OUT messageNumber integer,
+OUT messageText char)	
+    /****************************************************************************
+	 * A procedure that will get the details of the last exception from a message
+	 * IN InputTree:  The incoming exception list
+	 * IN messageNumber:  The last message numberr.
+	 * IN messageText: The last message text.
+	 *****************************************************************************/
+   BEGIN
+   	    -- Create a reference to the first child of the exception list
+   	    declare ptrException reference to InputTree.*[1];
+   	    -- keep looping while the moves to the child of exception list work 
+		WHILE lastmove(ptrException) DO
+			-- store the current values for the error number and text
+			IF ptrException.Number is not null THEN
+        		SET messageNumber = ptrException.Number;
+        		SET messageText = ptrException.Text;
+  			END IF;
+  			-- now move to the last child which should be the next exceptionlist
+			move ptrException lastchild;
+		END WHILE; 
+   END;
+   
+ -- [06-Feb-2020]: Convenience methods to determine the exact cause of exception.  
+CREATE  FUNCTION isMessageParsingException(IN refExceptionList REFERENCE) RETURNS BOOLEAN
+BEGIN
+	RETURN 	isThisTheException(refExceptionList, ERROR_CODE_JSON_PARSING_ERROR) OR 
+						isThisTheException(refExceptionList, ERROR_CODE_XML_PARSING_ERROR) ;
+END;
+
+ -- [15-Feb-2020]: Convenience methods to determine the exact cause of exception.  
+CREATE  FUNCTION isMessageFieldValueConversionException(IN refExceptionList REFERENCE) RETURNS BOOLEAN
+BEGIN
+	-- TODO: Optimization.
+	RETURN isThisTheException(refExceptionList, ERROR_CODE_CONVERSION_ERROR_INTEGER) OR 
+	isThisTheException(refExceptionList, ERROR_CODE_CONVERSION_ERROR_BOOLEAN);
+END;
+
+ -- [03-Mar-2020]: Convenience methods to determine the exact cause of exception.  
+CREATE  FUNCTION isMessageSocketConnectionException(IN refExceptionList REFERENCE) RETURNS BOOLEAN
+BEGIN
+	RETURN 	isThisTheException(refExceptionList, ERROR_CODE_SOCKET_CONNECTION_3150) OR 
+						isThisTheException(refExceptionList, ERROR_CODE_SOCKET_CONNECTION_3151) OR 
+						isThisTheException(refExceptionList, ERROR_CODE_SOCKET_CONNECTION_3152);
+END;
+
+ -- [20-May-2020]: Convenience methods to determine the exact cause of exception.  
+CREATE  FUNCTION isAPIRequestBuildingException(IN refExceptionList REFERENCE) RETURNS BOOLEAN
+BEGIN
+	RETURN 	isThisTheException(refExceptionList, ERROR_CODE_XML_WRITING_ERROR) OR 
+						isThisTheException(refExceptionList, ERROR_CODE_JSON_WRITING_ERROR) OR 
+						isThisTheException(refExceptionList, ERROR_CODE_SOAP_WRITING_ERROR);
+END;
+
+-- Uses the message number to match with the BIPMsg code and return true if a match if found.
+CREATE  FUNCTION isThisTheException(IN refExceptionList REFERENCE, IN messageNumber INTEGER) RETURNS BOOLEAN
+BEGIN
+   	    -- Create a reference to the first child of the exception list
+   	    declare ptrException reference to refExceptionList.*[1];
+   	    -- keep looping while the moves to the child of exception list work 
+		WHILE lastmove(ptrException) DO
+			-- store the current values for the error number and text
+			IF ptrException.Number is not null THEN
+        		IF messageNumber =ptrException.Number THEN
+        			RETURN TRUE;
+        		END IF;	
+        		-- SET messageText = ptrException.Text;
+  			END IF;
+  			-- now move to the last child which should be the next exceptionlist
+			move ptrException lastchild;
+		END WHILE; 
+		
+		RETURN FALSE;
+END;
+
+-- [15-Feb-2020]: Unsets the values for all original_* fields thereby deleting them.
+CREATE FUNCTION unsetResentMessageFields(INOUT refAPIMessage REFERENCE) 
+BEGIN
+		SET refAPIMessage.original_request_id = NULL;
+		SET refAPIMessage.original_request_datetime = NULL;
+		SET refAPIMessage.original_channel_id = NULL;
+		SET refAPIMessage.original_sender_system_id = NULL;
+		SET refAPIMessage.original_sender_system_user_id = NULL;
+		SET refAPIMessage.original_sender_system_user_id_type = NULL;
+		SET refAPIMessage.original_request_priority = NULL;
+END;
+
+
+-- [13-Feb-2020]:  Recreate Payment Instruction request from API response.
+CREATE FUNCTION buildNewPaymentInstructionAPIRequest(IN refPaymentInstructionStatus REFERENCE,  INOUT refNewPaymentInstructionRequest REFERENCE) 
+BEGIN
+	SET refNewPaymentInstructionRequest.api_version									= refPaymentInstructionStatus.api_version;
+	SET refNewPaymentInstructionRequest.request_id 									= UCASE(UUIDASCHAR);
+	SET refNewPaymentInstructionRequest.request_datetime 						= CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'IU');
+	
+--	SET refNewPaymentInstructionRequest.channel_id  									= 'IXC';
+	SET refNewPaymentInstructionRequest.sender_system_id  						= 'IXC';
+
+--	SET refNewPaymentInstructionRequest.sender_system_user_id  			= '';
+--	SET refNewPaymentInstructionRequest.sender_system_user_id_type 	= '';
+
+	SET refNewPaymentInstructionRequest.request_priority  							= refPaymentInstructionStatus.request_priority;
+	SET refNewPaymentInstructionRequest.resent_indicator  						= TRUE;
+	SET refNewPaymentInstructionRequest.original_request_id  					= COALESCE(refPaymentInstructionStatus.original_request_id, 
+																																							  refPaymentInstructionStatus.request_id);
+	SET refNewPaymentInstructionRequest.original_request_datetime 		= COALESCE(refPaymentInstructionStatus.original_request_datetime, 
+																																							 refPaymentInstructionStatus.request_datetime);
+	SET refNewPaymentInstructionRequest.original_channel_id  					= COALESCE(refPaymentInstructionStatus.original_channel_id,
+																																							  refPaymentInstructionStatus.payment_instruction.channel_code);
+	SET refNewPaymentInstructionRequest.original_sender_system_id 		= COALESCE(refPaymentInstructionStatus.original_sender_system_id, 
+																																							  refPaymentInstructionStatus.sender_system_id);
+	SET refNewPaymentInstructionRequest.original_sender_system_user_id 
+																= COALESCE(refPaymentInstructionStatus.original_sender_system_user_id, refPaymentInstructionStatus.sender_system_user_id);
+	SET refNewPaymentInstructionRequest.original_sender_system_user_id_type 
+																= COALESCE(refPaymentInstructionStatus.original_sender_system_user_id_type, refPaymentInstructionStatus.sender_system_user_id_type);
+	SET refNewPaymentInstructionRequest.original_request_priority 			= COALESCE(refPaymentInstructionStatus.original_request_priority, 
+																																							  refPaymentInstructionStatus.request_priority);		-- preserve the original priority.
+	
+	SET refNewPaymentInstructionRequest.test_indicator  								= refPaymentInstructionStatus.test_indicator;
+	SET refNewPaymentInstructionRequest.application_context 					= refPaymentInstructionStatus.application_context;
+	
+	-- Business Data Fields.
+	SET refNewPaymentInstructionRequest.client_code 									= refPaymentInstructionStatus.client_code;
+	SET refNewPaymentInstructionRequest.payment_instruction 					= refPaymentInstructionStatus.payment_instruction;
+
+END;
+
+CREATE FUNCTION getSingleHttpHeaderValue(IN httpHeader REFERENCE, IN httpHeaderName CHARACTER) 
+RETURNS CHARACTER 
+BEGIN
+	DECLARE chHeaderValueRet 		CHARACTER NULL;
+	DECLARE refHttpHeaderField 	REFERENCE TO httpHeader.*[1];
+		
+--		DECLARE chHeaderName CHARACTER '';
+--		DECLARE chHeaderValue CHARACTER '';
+		
+		DECLARE chLwCsHeaderName CHARACTER LOWER(httpHeaderName);
+		
+		headers:WHILE LASTMOVE(refHttpHeaderField) DO
+			IF (chLwCsHeaderName = LOWER(FIELDNAME(refHttpHeaderField))) THEN
+				SET chHeaderValueRet 	= FIELDVALUE(refHttpHeaderField);
+				LEAVE headers;
+			END IF;
+			MOVE refHttpHeaderField NEXTSIBLING;
+		END WHILE;
+	
+	RETURN chHeaderValueRet;
+		
+END;

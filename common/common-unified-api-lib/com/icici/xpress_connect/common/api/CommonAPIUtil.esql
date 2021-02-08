@@ -1,0 +1,157 @@
+BROKER SCHEMA com.icici.xpress_connect.common.api
+
+CREATE COMPUTE MODULE CommonAPIUtil
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		-- CALL CopyMessageHeaders();
+		-- CALL CopyEntireMessage();contains
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+END MODULE;
+
+-- [15-Jan-2020]: Utility method to parse string into a value tree.
+CREATE FUNCTION splitString (IN stringToParse CHARACTER, IN delimiter CHARACTER, INOUT refParsedOutput REFERENCE)
+BEGIN
+	DECLARE tmpStringToParse CHARACTER stringToParse;
+	DECLARE index INTEGER 1;
+
+	CREATE FIELD refParsedOutput.Values;
+	
+	WHILE LENGTH(tmpStringToParse) > 0 DO 
+		IF CONTAINS(tmpStringToParse, ',') THEN 
+			SET refParsedOutput.Values.Field[index] = SUBSTRING (tmpStringToParse BEFORE ',');
+			SET tmpStringToParse = SUBSTRING (tmpStringToParse AFTER ',');
+		ELSE 
+			SET refParsedOutput.Values.Field[index] = tmpStringToParse;
+			SET tmpStringToParse = '';
+		END IF;
+		SET index = index + 1;
+	END WHILE;
+END;
+
+
+-- [21-Sep-2020]: Remove XML declation from source string  
+CREATE FUNCTION removeXmlDeclaration(IN sourceString CHARACTER) RETURNS CHARACTER
+BEGIN
+	
+	RETURN com.icici.xpress_connect.common.api.regex_replaceValues(sourceString ,'<\?xml.*?\?>', '');
+END;
+
+-- [15-Jan-2020]: Check if the value tree contains the given value.
+CREATE FUNCTION containsValue (IN valueToCheck CHARACTER, IN valueTree REFERENCE) 
+RETURNS BOOLEAN
+BEGIN
+	IF valueToCheck = NULL OR EXISTS(valueTree.*[]) THEN
+		RETURN FALSE;
+	END IF;
+	
+	-- The key element can have any name. We will compare the value of that field.
+	FOR nextValueField AS valueTree.*[] DO
+		IF nextValueField = valueToCheck THEN
+			RETURN  TRUE;
+		END IF;	
+	END FOR;
+	
+	RETURN FALSE;
+	
+END;
+
+-- Utility method to parse ISO 8601 datetime string to IBM ACE native Timestamp datatype.
+CREATE  PROCEDURE DateTimeHelper_parse_iso8601(IN dateTimeValue CHARACTER) RETURNS TIMESTAMP
+LANGUAGE JAVA
+EXTERNAL NAME "com.icici.xpress_connect.common.utils.DateTimeHelper.parse_iso8601";
+
+-- Utility method to parse custom datetime string to IBM ACE native Timestamp datatype.
+CREATE  PROCEDURE DateTimeHelper_parse(IN dateTimeValue CHARACTER, IN dateTimeFormat CHARACTER) RETURNS TIMESTAMP
+LANGUAGE JAVA
+EXTERNAL NAME "com.icici.xpress_connect.common.utils.DateTimeHelper.parse";
+
+CREATE FUNCTION getPolicyProperty(IN policyName CHARACTER, IN propertyName CHARACTER)  
+RETURNS CHARACTER  
+LANGUAGE JAVA  
+EXTERNAL NAME "com.icici.xpress_connect.common.utils.PolicyConfigurationAccessor.getPolicyProperty";
+
+-- Regular Expression Support.
+-- Simple match using regex. Entire text is checked against regex.
+CREATE FUNCTION regex_matches(IN string CHARACTER, IN regex CHARACTER)  
+RETURNS BOOLEAN 
+LANGUAGE JAVA  
+EXTERNAL NAME "com.icici.xpress_connect.common.utils.StringUtil.matches";
+ 
+ -- Simple find using regex. Text is run through to find if any substring matches the regex.
+CREATE FUNCTION regex_contains(IN string CHARACTER, IN regex CHARACTER, IN fromIndex INTEGER)  
+RETURNS BOOLEAN 
+LANGUAGE JAVA  
+EXTERNAL NAME "com.icici.xpress_connect.common.utils.StringUtil.contains";
+
+ -- Simple find using regex. Text is run through from the given character position, to find if any substring matches the regex.
+CREATE FUNCTION regex_containsAt(IN string CHARACTER, IN regex CHARACTER, IN fromIndex INTEGER)  
+RETURNS INTEGER
+LANGUAGE JAVA  
+EXTERNAL NAME "com.icici.xpress_connect.common.utils.StringUtil.containsAt";
+
+CREATE FUNCTION regex_match(IN string CHARACTER, IN regex CHARACTER, INOUT result REFERENCE) 
+LANGUAGE JAVA  
+EXTERNAL NAME "com.icici.xpress_connect.common.utils.StringUtil.getMatch";
+
+CREATE FUNCTION regex_find(IN string CHARACTER, IN regex CHARACTER, INOUT result REFERENCE) 
+LANGUAGE JAVA  
+EXTERNAL NAME "com.icici.xpress_connect.common.utils.StringUtil.getFind";
+
+CREATE FUNCTION regex_replaceValues(IN sourceString CHARACTER, IN searchRegex CHARACTER, IN replacementString  CHARACTER) 
+RETURNS CHARACTER
+LANGUAGE JAVA  
+EXTERNAL NAME "com.icici.xpress_connect.common.utils.StringUtil.replaceAll";
+
+CREATE FUNCTION removeXmlWhitespaces(IN xmlWithWhitespaces CHARACTER) 
+RETURNS CHARACTER
+LANGUAGE JAVA  
+EXTERNAL NAME "com.icici.xpress_connect.common.utils.StringUtil.removeXmlWhitespaces";
+
+CREATE FUNCTION removeXmlElements(IN targetFieldName CHARACTER, IN xmlString CHARACTER)
+RETURNS CHARACTER
+BEGIN
+	DECLARE searchRegex CHARACTER '(\s*)\<' || targetFieldName || '\>(.*?)\</' || targetFieldName || '\>(\s*)';
+	RETURN regex_replaceValues(xmlString, searchRegex,'');
+END;
+	
+CREATE FUNCTION removeJsonElements(IN targetFieldName CHARACTER, IN jsonString CHARACTER)
+RETURNS CHARACTER
+BEGIN
+	DECLARE searchRegex CHARACTER  '(\s*\"' || targetFieldName || '\"\s*:\s*\"[^\"]*\"\s*,)|(,\s*\"' || targetFieldName || '\"\s*:\s*\"[^\"]*\"\s*)';
+	RETURN regex_replaceValues(jsonString, searchRegex,'');
+END;
+
+CREATE FUNCTION concatenateJsonFieldNVP(IN message CHARACTER, 
+				IN fieldNVSeparator CHARACTER, IN fieldNVPSeparator  CHARACTER, 
+				IN elementNameToSkip CHARACTER, IN fieldNameCase CHARACTER) 
+RETURNS CHARACTER
+LANGUAGE JAVA  
+EXTERNAL NAME "com.icici.xpress_connect.common.utils.StringUtil.concatenateJsonFieldValuePairs";
+
+CREATE FUNCTION concatenateXmlFieldNVP(IN message CHARACTER, 
+				IN fieldNVSeparator CHARACTER, IN fieldNVPSeparator  CHARACTER, 
+				IN elementNameToSkip CHARACTER, IN fieldNameCase CHARACTER) 
+RETURNS CHARACTER
+LANGUAGE JAVA  
+EXTERNAL NAME "com.icici.xpress_connect.common.utils.StringUtil.concatenateXmlFieldValuePairs";
+CREATE FUNCTION concatenateXmlFieldNVPNS(IN message CHARACTER, 
+				IN fieldNVSeparator CHARACTER, IN fieldNVPSeparator  CHARACTER, 
+				IN elementNameToSkip CHARACTER, IN fieldNameCase CHARACTER, IN dropNSPrefix BOOLEAN) 
+RETURNS CHARACTER
+LANGUAGE JAVA  
+EXTERNAL NAME "com.icici.xpress_connect.common.utils.StringUtil.concatenateXmlFieldValuePairsNS";
