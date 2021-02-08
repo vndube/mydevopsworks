@@ -1,4 +1,4 @@
 FROM ibmcom/ace-mqclient
 USER aceuser
-COPY packages /home/aceuser/bars
+COPY packages/*.bar /home/aceuser/bars
 RUN ace_compile_bars.sh
