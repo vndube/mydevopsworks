@@ -51,8 +51,8 @@ pipeline {
 		dependents = "common-api-functions-lib,common-unified-api-lib"
 	
 	    sonar_project = "This_is_my_esql_project_devtest"  
-	    
-	    
+	    sonarServerUrl = ""
+        analysisId = ""
 	    
 	    imagename = "ixc-dev/acemqclient-profund"
         docker_registry_url = "127.0.0.1:5000"
@@ -105,10 +105,11 @@ pipeline {
                           sh '/var/jenkins_home/sonar-scanner-cli/bin/sonar-scanner -Dsonar.projectKey=${sonar_project}'
                           //below code is for quality gate
                           script{
-                            def qg = waitforqualitgateLocal() // Reuse taskId previously collected by withSonarQubeEnv
-                            if (qg.status != 'OK') {
-                               error "Pipeline aborted due to quality gate failure: ${qg.status}"
-                            }
+                            waitforqualitgateLocal() 
+//                            def qg = waitforqualitgateLocal() // Reuse taskId previously collected by withSonarQubeEnv
+//                            if (qg.status != 'OK') {
+//                               error "Pipeline aborted due to quality gate failure: ${qg.status}"
+//                            }
                           }
                         }
 				      }
@@ -119,6 +120,13 @@ pipeline {
                 stage("Quality Gate"){
 				   steps {
 				       echo "In Quality Gate"
+				       script{
+				         def qg = getQualityResult()
+                         if (qg.status != 'OK') {
+                            error "Pipeline aborted due to quality gate failure: ${qg.status}"
+                         }
+				       }
+
 //                      timeout(time: 1, unit: 'HOURS') { // Just in case something goes wrong, pipeline will be killed after a timeout
                         // script{
                         //  def qg = waitForQualityGate() // Reuse taskId previously collected by withSonarQubeEnv
@@ -257,10 +265,10 @@ pipeline {
 
     post {
         // Always runs. And it runs before any of the other post conditions.
-        //always {
+        always {
             // Let's wipe out the workspace before we finish!
-        //    deleteDir()
-        //}
+            deleteDir()
+        }
         success {
             sendEmail("Successful");
         }
@@ -322,35 +330,24 @@ def buildPackage(){
 }
 
 def uploadPackage(){
-//		git push origin HEAD:master
-//
-//git remote set-url origin "https://${credentialkey}@${gitrepourl}"
-//, url: gitrepourl
-//                git remote set-url origin "https://e8f3366fe2096f77c2c0d27b3b0331ffd5eb2c4e@github.com/vndube/mydevopsworks.git"
+    dir("${builddir}") {
+       withCredentials([usernamePassword(credentialsId: credentialkey, 
+                       passwordVariable: 'GIT_PASSWORD', 
+                       usernameVariable: 'GIT_USERNAME')]) {
 
-
-           dir("${builddir}") {
-               
-               withCredentials([usernamePassword(credentialsId: credentialkey, 
-                               passwordVariable: 'GIT_PASSWORD', 
-                               usernameVariable: 'GIT_USERNAME')]) {
-//                        sh('git push https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/my-org/my-repo.git')
-                
-               
-				sh '''
-				pwd
-				git remote -v
-                git remote set-url origin "https://${GIT_USERNAME}:${GIT_PASSWORD}@${gitrepourl}"
-				git add .
-				if ! git commit -m "adding package files" | grep -i "nothing to commit\\|no changes added"; 
-				then
-					echo "pushing changed files - bar files"
-					git push origin HEAD:master
-				fi
-				'''
-               } //end of withCredentials
-			}
-	
+			sh '''
+			pwd
+			git remote -v
+            git remote set-url origin "https://${GIT_USERNAME}:${GIT_PASSWORD}@${gitrepourl}"
+			git add .
+			if ! git commit -m "adding package files" | grep -i "nothing to commit\\|no changes added"; 
+			then
+				echo "pushing changed files - bar files"
+				git push origin HEAD:master
+			fi
+			'''
+       } //end of withCredentials
+	}
 }
 
 // get change log to be send over the mail
@@ -371,12 +368,14 @@ def getChangeString() {
     }
 }
 
+
+
 def waitforqualitgateLocal(){
       sh "cat .scannerwork/report-task.txt"
       
       def props = readProperties  file: '.scannerwork/report-task.txt'
       echo "properties=${props}"
-      def sonarServerUrl=props['serverUrl']
+      sonarServerUrl=props['serverUrl']
       def ceTaskUrl= props['ceTaskUrl']
       def ceTask
       timeout(time: 1, unit: 'MINUTES') {
@@ -385,23 +384,33 @@ def waitforqualitgateLocal(){
               ceTask = readJSON text: response.content
               echo ceTask.toString()
               echo ceTask["task"]["status"]
-              return "SUCCESS".equals(ceTask["task"]["status"])
-             //return true
+              
+              analysisId = ceTask["task"]["analysisId"]
+              return  "SUCCESS".equals(ceTask["task"]["status"])
+
           }
       }
       
 //      def response2 = httpRequest url : sonarServerUrl + "/api/qualitygates/project_status?analysisId=" + ceTask["task"]["analysisId"], authentication: 'jenkins_scanner'
-        def response2 = httpRequest url : sonarServerUrl + "/api/qualitygates/project_status?analysisId=" + ceTask["task"]["analysisId"]
-        echo "${response2}"
-        def qualitygate =  readJSON text: response2.content
-        echo qualitygate.toString()
-        return qualitygate["projectStatus"]
+
+//        def response2 = httpRequest url : sonarServerUrl + "/api/qualitygates/project_status?analysisId=" + ceTask["task"]["analysisId"]
+//        echo "${response2}"
+//        def qualitygate =  readJSON text: response2.content
+//        echo qualitygate.toString()
+//        return qualitygate["projectStatus"]
+
 //        return qualitygate["projectStatus"]["status"]
 //        if ("ERROR".equals(qualitygate["projectStatus"]["status"])) {
 //          error  "Quality Gate failure"
 //        } 
 }
-
+def getQualityResult(){
+        def response2 = httpRequest url : sonarServerUrl + "/api/qualitygates/project_status?analysisId=" + analysisId
+        echo "${response2}"
+        def qualitygate =  readJSON text: response2.content
+        echo qualitygate.toString()
+        return qualitygate["projectStatus"]
+}
 
 def sendEmail(status) {
    echo "Build $BUILD_NUMBER - " + status + " (${currentBuild.fullDisplayName})"
